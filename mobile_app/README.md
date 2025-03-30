@@ -1,4 +1,4 @@
-# mobile_app
+# makango
 
 A new Flutter project.
 
