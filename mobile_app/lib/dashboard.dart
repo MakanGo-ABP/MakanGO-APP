@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/restaurantdetail_page.dart';
-import 'package:makango/search_page.dart';
-import 'package:makango/tambahulasan.dart';
+import 'restaurantdetail_page.dart';
+import 'search_page.dart';
+import 'tambahulasan.dart';
 import 'restaurant_model.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -27,7 +27,7 @@ class DashboardPage extends StatelessWidget {
       rating: 4.8,
       reviews: 150,
       address:
-          "Jl. Podomoro Boulevard Utara No.1, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
+          "Jl. Terusan Buah Batu, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
     ),
     Restaurant(
       name: "Mie Ayam Bakso Jabrig",
@@ -37,7 +37,7 @@ class DashboardPage extends StatelessWidget {
       rating: 4.5,
       reviews: 120,
       address:
-          "Jl. Podomoro Boulevard Utara No.1, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
+          "Gg. PGA, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
     ),
   ];
 

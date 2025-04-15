@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/dashboard.dart';
+import 'detailulasan.dart';
 
 class UlasanPage extends StatelessWidget {
   final List<Map<String, String>> ulasanList = [
@@ -113,77 +113,92 @@ class UlasanPage extends StatelessWidget {
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
           ),
-          itemCount: ulasanList.length, // Gunakan panjang list ulasan
+          itemCount: ulasanList.length,
           itemBuilder: (context, index) {
-            final ulasan = ulasanList[index]; // Ambil data sesuai index
-            return Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              color: Colors.white,
-              elevation: 4,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: Image.asset(
-                      ulasan["image"]!, // Gunakan gambar dari list
-                      height: 180,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Lorem ipsum dolor sit amet blablablabla citcitcit",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(fontSize: 14),
+            final ulasan = ulasanList[index];
+
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => DetailUlasanPage(
+                          image: ulasan["image"]!,
+                          username: ulasan["username"]!,
+                          avatar: ulasan["avatar"]!,
+                          likes: ulasan["likes"]!,
                         ),
-                        SizedBox(height: 10),
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundImage: AssetImage(
-                                ulasan["avatar"]!,
-                              ), // Avatar berbeda
-                              radius: 12,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              ulasan["username"]!, // Nama user berbeda
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                  ),
+                );
+              },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                color: Colors.white,
+                elevation: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                      child: Image.asset(
+                        ulasan["image"]!,
+                        height: 180,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Lorem ipsum dolor sit amet blablablabla citcitcit",
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(fontSize: 14),
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                backgroundImage: AssetImage(ulasan["avatar"]!),
+                                radius: 12,
                               ),
-                            ),
-                            Spacer(),
-                            Icon(
-                              Icons.favorite_border,
-                              size: 16,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              ulasan["likes"]!, // Jumlah like berbeda
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
+                              SizedBox(width: 8),
+                              Text(
+                                ulasan["username"]!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Spacer(),
+                              Icon(
+                                Icons.favorite_border,
+                                size: 16,
                                 color: Colors.grey,
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                              SizedBox(width: 4),
+                              Text(
+                                ulasan["likes"]!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },

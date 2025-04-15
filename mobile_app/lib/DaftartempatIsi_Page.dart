@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'main.dart';
+import 'tambahtempat_page.dart';
 
-class TambahRestoPage extends StatelessWidget {
-  final TextEditingController namaController = TextEditingController();
-  final TextEditingController deskripsiController = TextEditingController();
-  final TextEditingController alamatController = TextEditingController();
+class DaftartempatIsiPage extends StatelessWidget {
+  const DaftartempatIsiPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,7 @@ class TambahRestoPage extends StatelessWidget {
           onPressed: () => _showCancelPopup(context),
         ),
         title: Text(
-          "Tambah Resto",
+          "Buat Daftar Tempat",
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -40,23 +39,15 @@ class TambahRestoPage extends StatelessWidget {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
-                  borderRadius: BorderRadius.circular(
-                    50,
-                  ), // Bigger border radius
+                  borderRadius: BorderRadius.circular(50),
                 ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ), // Kurangi padding
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 alignment: Alignment.center,
-                constraints: BoxConstraints(
-                  minWidth: 90,
-                  minHeight: 50,
-                ), // Perkecil ukuran minimal
+                constraints: BoxConstraints(minWidth: 90, minHeight: 50),
                 child: Text(
                   "Simpan",
                   style: GoogleFonts.poppins(
-                    fontSize: 11, // Perkecil ukuran teks
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -67,201 +58,200 @@ class TambahRestoPage extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      "Tambah Resto Baru",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    "Buat Daftar Tempat Baru",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                    SizedBox(height: 8),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "Buatlah daftar perjalanan kuliner Anda dan bagikan kepada orang-orang terkasih.",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              "Tulis ulasan lebih lengkap",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 5),
+
+            TextField(
+              decoration: InputDecoration(
+                hintText: "Rencana jalan-jalan",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                counterText: "0/30",
+              ),
+              maxLength: 30,
+            ),
+            const SizedBox(height: 20),
+            // Switch publik
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text("Tetapkan Daftar Tempat ke Publik"),
                     Text(
-                      "Buatlah daftar resto yang belum terdaftar dan bagikan kepada orang-orang terkasih.",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
+                      "Siapa pun dapat menemukan & melihat daftar tempat ini",
+                      style: TextStyle(fontSize: 11.5, color: Colors.grey),
                     ),
                   ],
                 ),
+                StatefulBuilder(
+                  builder: (context, setState) {
+                    bool isPublic = true;
+                    return Switch(
+                      value: isPublic,
+                      onChanged: (value) {
+                        setState(() {
+                          isPublic = value;
+                        });
+                      },
+                      activeColor: Colors.orange,
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Catatan
+            Text(
+              "Tambahkan Catatan",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
-              SizedBox(height: 20),
-              _buildTextField(
-                "Nama Resto",
-                "Masukkan nama resto...",
-                namaController,
-                30,
+            ),
+            TextField(
+              decoration: InputDecoration(
+                hintText: "Tambah catatan",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
               ),
-              _buildTextField(
-                "Deskripsi Resto",
-                "Tuliskan deskripsi resto...",
-                deskripsiController,
-                30,
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const SizedBox(width: 7),
+                Image.asset('assets/logo_lokasi_v2.png', height: 20),
+                const SizedBox(width: 8),
+                Text(
+                  "0 Tempat",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Gambar dan info kosong
+            Center(
+              child: Column(
+                children: [
+                  Image.asset('assets/empty_state.png', height: 200),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Daftar Tempat Anda kosong!",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    "Mulai menambahkan tempat ke Daftar Tempat ini",
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 100), // biar gak ketutup tombol
+                ],
               ),
-              _buildTimePickerField(context, "Jam Buka Resto"),
-              _buildTimePickerField(context, "Jam Tutup Resto"),
-              _buildTextField(
-                "Alamat Resto",
-                "Tuliskan alamat resto...",
-                alamatController,
-                50,
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 130),
+        child: SizedBox(
+          width: double.infinity,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFE52020), Color(0xFFA80707)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
               ),
-              _buildFileUploadSection(),
-            ],
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(30),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => TambahtempatPage()),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        "Tambah Tempat",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
-  }
-
-  Widget _buildTextField(
-    String label,
-    String hint,
-    TextEditingController controller,
-    int maxLength,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(40)),
-          ),
-          maxLength: maxLength,
-          buildCounter: (
-            BuildContext context, {
-            int? currentLength,
-            bool? isFocused,
-            int? maxLength,
-          }) {
-            return Text(
-              "${currentLength ?? 0}/$maxLength",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            );
-          },
-        ),
-        SizedBox(height: 10),
-      ],
-    );
-  }
-
-  Widget _buildTimePickerField(BuildContext context, String label) {
-    TimeOfDay? selectedTime;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 5),
-        GestureDetector(
-          onTap: () async {
-            final TimeOfDay? picked = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.now(),
-            );
-            if (picked != null) {
-              selectedTime = picked;
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  selectedTime != null
-                      ? selectedTime!.format(context)
-                      : "-- : --",
-                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
-                ),
-                Icon(Icons.access_time, color: Colors.grey),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(height: 10),
-      ],
-    );
-  }
-
-  Widget _buildFileUploadSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Alamat Resto",
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 5),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFA80707), width: 2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.folder, color: const Color(0xFFA80707), size: 40),
-              SizedBox(height: 5),
-              Text(
-                "Unggah file Anda di sini",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: const Color(0xFFA80707),
-                ),
-              ),
-              SizedBox(height: 5),
-              OutlinedButton(
-                onPressed: () {},
-                child: Text(
-                  "Browse files",
-                  style: GoogleFonts.poppins(color: const Color(0xFFA80707)),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: const Color(0xFFA80707)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    // padding: const EdgeInsets.symmetric(vertical: 16),
+    // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
   }
 
   void _showSuccessPopup(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // Supaya tidak ada border default
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          width: double.infinity, // Lebar mengikuti layar penuh
+          width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -281,7 +271,7 @@ class TambahRestoPage extends StatelessWidget {
                 width: 35,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300], // Warna bar atas biar terlihat
+                  color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -301,9 +291,7 @@ class TambahRestoPage extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => MainScreen(),
-                    ), // Ganti NextPage dengan tujuan
+                    MaterialPageRoute(builder: (context) => MainScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -351,10 +339,7 @@ class TambahRestoPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/cancel.png',
-                height: 150,
-              ), // Ganti dengan gambar sesuai
+              Image.asset('assets/cancel.png', height: 150),
               const SizedBox(height: 16),
               Text(
                 "Anda yakin ingin kembali?",
@@ -379,9 +364,7 @@ class TambahRestoPage extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => MainScreen(),
-                        ), // Ganti NextPage dengan tujuan
+                        MaterialPageRoute(builder: (context) => MainScreen()),
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -407,10 +390,7 @@ class TambahRestoPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed:
-                        () => Navigator.pop(
-                          context,
-                        ), // Tutup popup, lanjut mengedit
+                    onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFE52020),
                       shape: RoundedRectangleBorder(

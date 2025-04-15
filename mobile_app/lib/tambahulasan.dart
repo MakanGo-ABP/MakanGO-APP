@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/restaurant_model.dart';
+import 'restaurant_model.dart';
 
 class TambahUlasanPage extends StatefulWidget {
   final Restaurant restaurant;

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_app/buatPlaceList_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'daftartempat.dart';
+import 'buatPlaceList_page.dart';
 import 'dashboard.dart';
 import 'profil.dart';
 import 'tambahresto.dart';
@@ -75,7 +76,7 @@ class _MainScreenState extends State<MainScreen> {
     DashboardPage(),
     UlasanPage(),
     TambahRestoPage(),
-    DaftartempatPage(),
+    BuatplacelistPage(),
     ProfilPage(),
   ];
 

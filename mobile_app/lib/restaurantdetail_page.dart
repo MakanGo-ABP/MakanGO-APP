@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'restaurant_model.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'tambahulasan.dart'; // Ensure this file contains the TambahUlasanPage class
 
 class RestaurantDetailPage extends StatelessWidget {
   final Restaurant restaurant;
@@ -140,27 +141,46 @@ class RestaurantDetailPage extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE52020), Color(0xFFA80707)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        fixedSize: const Size(122, 40),
-                        side: const BorderSide(color: Colors.transparent),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7.5,
-                          vertical: 5,
-                        ),
+                        borderRadius: BorderRadius.circular(30),
                       ),
-                      icon: Icon(Icons.edit, color: Colors.white, size: 15),
-                      label: Text(
-                        "Tambah ulasan",
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) =>
+                                      TambahUlasanPage(restaurant: restaurant),
+                            ),
+                          );
+                        }, //add router here
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          fixedSize: const Size(122, 40),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7.5,
+                            vertical: 5,
+                          ),
+                        ),
+                        icon: Icon(Icons.edit, color: Colors.white, size: 15),
+                        label: Text(
+                          "Tambah ulasan",
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

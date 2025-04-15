@@ -42,6 +42,7 @@ class SearchPage extends StatelessWidget {
             flexibleSpace: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const SizedBox(height: 100),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Text(
@@ -97,15 +98,27 @@ class SearchPage extends StatelessWidget {
       body: SingleChildScrollView(
         physics: BouncingScrollPhysics(),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: CircleAvatar(
-                  radius: 45,
-                  backgroundImage: AssetImage("assets/ex_profile.png"),
+              Text(
+                "Kategori",
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  _buildSearchButton("Martabak"),
+                  const SizedBox(width: 10),
+                  _buildSearchButton("Bakmie"),
+                  const SizedBox(width: 10),
+                  _buildSearchButton("Ice Cream"),
+                  const SizedBox(height: 20, width: 10),
+                ],
               ),
               const SizedBox(height: 20),
               Text(
@@ -193,6 +206,25 @@ class SearchPage extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchButton(String text) {
+    return OutlinedButton(
+      onPressed: () {},
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(color: Color(0xFFA80707)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          // fontWeight: FontWeight.w500,
+          color: Color(0xFFA80707),
         ),
       ),
     );

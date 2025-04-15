@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_app/DaftartempatIsi_page.dart';
+import 'package:mobile_app/daftartempat.dart';
+import 'package:mobile_app/detailulasan.dart';
 import 'main.dart';
 
-class TambahRestoPage extends StatelessWidget {
-  final TextEditingController namaController = TextEditingController();
-  final TextEditingController deskripsiController = TextEditingController();
-  final TextEditingController alamatController = TextEditingController();
+class TambahtempatPage extends StatefulWidget {
+  const TambahtempatPage({super.key});
+
+  @override
+  State<TambahtempatPage> createState() => _TambahtempatPageState();
+}
+
+class _TambahtempatPageState extends State<TambahtempatPage> {
+  bool isAdded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +27,7 @@ class TambahRestoPage extends StatelessWidget {
           onPressed: () => _showCancelPopup(context),
         ),
         title: Text(
-          "Tambah Resto",
+          "Tambah Tempat",
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -40,23 +48,15 @@ class TambahRestoPage extends StatelessWidget {
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   ),
-                  borderRadius: BorderRadius.circular(
-                    50,
-                  ), // Bigger border radius
+                  borderRadius: BorderRadius.circular(50),
                 ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ), // Kurangi padding
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 alignment: Alignment.center,
-                constraints: BoxConstraints(
-                  minWidth: 90,
-                  minHeight: 50,
-                ), // Perkecil ukuran minimal
+                constraints: BoxConstraints(minWidth: 90, minHeight: 50),
                 child: Text(
                   "Simpan",
                   style: GoogleFonts.poppins(
-                    fontSize: 11, // Perkecil ukuran teks
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -67,190 +67,127 @@ class TambahRestoPage extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      "Tambah Resto Baru",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Row(
+                children: [
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: Row(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Icon(Icons.search, color: Colors.grey),
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    hintText: "Cari Resto...",
+                                    border: InputBorder.none,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.location_on,
+                                    color: const Color(0xFFA80707),
+                                  ),
+                                  SizedBox(width: 5),
+                                  Expanded(
+                                    child: Text(
+                                      "McDonald's - Podomoro Park",
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        isAdded = !isAdded;
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.black),
+                                      ),
+
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        isAdded ? Icons.remove : Icons.add,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                "Jl. Podomoro Boulevard Utara No.1, Lengkong, Bandung",
+                                style: GoogleFonts.poppins(fontSize: 12),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                softWrap: true,
+                                textWidthBasis: TextWidthBasis.parent,
+                              ),
+
+                              SizedBox(height: 5),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    color: const Color(0xFFA80707),
+                                    size: 16,
+                                  ),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    "00:00 – 23:59",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: const Color(0xFFA80707),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      "Buatlah daftar resto yang belum terdaftar dan bagikan kepada orang-orang terkasih.",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              SizedBox(height: 20),
-              _buildTextField(
-                "Nama Resto",
-                "Masukkan nama resto...",
-                namaController,
-                30,
-              ),
-              _buildTextField(
-                "Deskripsi Resto",
-                "Tuliskan deskripsi resto...",
-                deskripsiController,
-                30,
-              ),
-              _buildTimePickerField(context, "Jam Buka Resto"),
-              _buildTimePickerField(context, "Jam Tutup Resto"),
-              _buildTextField(
-                "Alamat Resto",
-                "Tuliskan alamat resto...",
-                alamatController,
-                50,
-              ),
-              _buildFileUploadSection(),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField(
-    String label,
-    String hint,
-    TextEditingController controller,
-    int maxLength,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(40)),
-          ),
-          maxLength: maxLength,
-          buildCounter: (
-            BuildContext context, {
-            int? currentLength,
-            bool? isFocused,
-            int? maxLength,
-          }) {
-            return Text(
-              "${currentLength ?? 0}/$maxLength",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            );
-          },
-        ),
-        SizedBox(height: 10),
-      ],
-    );
-  }
-
-  Widget _buildTimePickerField(BuildContext context, String label) {
-    TimeOfDay? selectedTime;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 5),
-        GestureDetector(
-          onTap: () async {
-            final TimeOfDay? picked = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.now(),
-            );
-            if (picked != null) {
-              selectedTime = picked;
-            }
-          },
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey.shade400),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  selectedTime != null
-                      ? selectedTime!.format(context)
-                      : "-- : --",
-                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
-                ),
-                Icon(Icons.access_time, color: Colors.grey),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(height: 10),
-      ],
-    );
-  }
-
-  Widget _buildFileUploadSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Alamat Resto",
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 5),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 20),
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFA80707), width: 2),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.folder, color: const Color(0xFFA80707), size: 40),
-              SizedBox(height: 5),
-              Text(
-                "Unggah file Anda di sini",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: const Color(0xFFA80707),
-                ),
-              ),
-              SizedBox(height: 5),
-              OutlinedButton(
-                onPressed: () {},
-                child: Text(
-                  "Browse files",
-                  style: GoogleFonts.poppins(color: const Color(0xFFA80707)),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: const Color(0xFFA80707)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -258,10 +195,10 @@ class TambahRestoPage extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent, // Supaya tidak ada border default
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
         return Container(
-          width: double.infinity, // Lebar mengikuti layar penuh
+          width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -281,7 +218,7 @@ class TambahRestoPage extends StatelessWidget {
                 width: 35,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300], // Warna bar atas biar terlihat
+                  color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -302,8 +239,8 @@ class TambahRestoPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => MainScreen(),
-                    ), // Ganti NextPage dengan tujuan
+                      builder: (context) => DaftartempatIsiPage(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -351,10 +288,7 @@ class TambahRestoPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/cancel.png',
-                height: 150,
-              ), // Ganti dengan gambar sesuai
+              Image.asset('assets/cancel.png', height: 150),
               const SizedBox(height: 16),
               Text(
                 "Anda yakin ingin kembali?",
@@ -379,9 +313,7 @@ class TambahRestoPage extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) => MainScreen(),
-                        ), // Ganti NextPage dengan tujuan
+                        MaterialPageRoute(builder: (context) => MainScreen()),
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -407,10 +339,7 @@ class TambahRestoPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed:
-                        () => Navigator.pop(
-                          context,
-                        ), // Tutup popup, lanjut mengedit
+                    onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFE52020),
                       shape: RoundedRectangleBorder(
