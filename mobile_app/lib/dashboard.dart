@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/restaurantdetail_page.dart';
-import 'package:makango/search_page.dart';
-import 'package:makango/tambahulasan.dart';
+import 'restaurantdetail_page.dart';
+import 'search_page.dart';
+import 'tambahulasan.dart';
 import 'restaurant_model.dart';
 
 class DashboardPage extends StatelessWidget {

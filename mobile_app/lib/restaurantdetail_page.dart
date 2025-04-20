@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 class RestaurantDetailPage extends StatelessWidget {
   final Restaurant restaurant;
 
-  RestaurantDetailPage({required this.restaurant});
+  const RestaurantDetailPage({super.key, required this.restaurant});
 
   @override
   Widget build(BuildContext context) {

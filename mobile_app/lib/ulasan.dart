@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/dashboard.dart';
 
 class UlasanPage extends StatelessWidget {
   final List<Map<String, String>> ulasanList = [
@@ -41,6 +40,8 @@ class UlasanPage extends StatelessWidget {
       "likes": "15",
     },
   ];
+
+  UlasanPage({super.key});
 
   @override
   Widget build(BuildContext context) {

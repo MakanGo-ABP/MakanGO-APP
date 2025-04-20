@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 // import 'package:makango/dashboard.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:mobile_app/services/auth.services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'main.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -12,6 +16,12 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true; // Toggle untuk visibilitas password
+  String? _errorMessage;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +42,7 @@ class _RegisterPageState extends State<RegisterPage> {
               _buildTitle(),
               const SizedBox(height: 30),
               _buildTextField(
+                controller: _nameController,
                 label: "Nama Lengkap",
                 hint: "Masukkan nama Anda...",
                 customIcon: Padding(
@@ -47,6 +58,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 20),
               _buildTextField(
+                controller: _emailController,
                 label: "Email",
                 hint: "Masukkan email Anda...",
                 customIcon: Padding(
@@ -62,6 +74,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 20),
               _buildTextField(
+                controller: _passwordController,
                 label: "Kata Sandi",
                 hint: "Masukkan kata sandi Anda...",
                 customIcon: Padding(
@@ -75,6 +88,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 isPassword: true,
               ),
+              const SizedBox(height: 20),
+              // Display the error message if it's not null
+              if (_errorMessage != null) 
+                _buildErrorMessage(_errorMessage!),
               const SizedBox(height: 30),
               _buildSubmitButton(),
             ],
@@ -83,6 +100,45 @@ class _RegisterPageState extends State<RegisterPage> {
       ),
     );
   }
+
+  // Error message UI
+  Widget _buildErrorMessage(String message) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.red.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error, color: Colors.red),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getFriendlyErrorMessage(dynamic error) {
+  // Example of Firebase Authentication error handling
+  if (error.toString().contains('email')) {
+    return "Format email tidak valid.";
+  } else if (error.toString().contains('password')) {
+    return "Kata sandi harus terdiri dari minimal 6 karakter.";
+  } else if (error.toString().contains('already in use')) {
+    return "Email ini sudah terdaftar. Silakan gunakan email lain.";
+  } else {
+    // Default fallback message
+    return "Terjadi kesalahan. Silakan coba lagi.";
+  }
+}
+
 
   // Tombol Kembali
   Widget _buildBackButton(BuildContext context) {
@@ -134,7 +190,8 @@ class _RegisterPageState extends State<RegisterPage> {
     required String hint,
     IconData? icon,
     Widget? customIcon,
-    required bool isPassword,
+    required bool isPassword, 
+    required TextEditingController controller,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +212,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
         const SizedBox(height: 5),
         TextField(
+          controller: controller,
           obscureText: isPassword ? _obscurePassword : false,
           decoration: InputDecoration(
             hintText: hint,
@@ -195,13 +253,35 @@ class _RegisterPageState extends State<RegisterPage> {
   // Tombol Submit
   Widget _buildSubmitButton() {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MainScreen(),
-          ), // Ganti NextPage dengan tujuan
-        );
+      onTap: () async {
+        final String name = _nameController.text.trim(); // Get name input
+        final String email = _emailController.text.trim(); // Get email input
+        final String password = _passwordController.text.trim(); // Get password input
+
+        try {
+          UserCredential userCredential = await authService.value.createAccount(
+            email: email,
+            password: password,
+          );
+          await authService.value.updateUsername(username: name); // Update display name
+
+          await _firestore.collection('User').doc(userCredential.user?.uid).set({
+            'name': name,
+            'email': email,
+            'created_at': FieldValue.serverTimestamp(),
+            'uid': userCredential.user?.uid,
+          });
+          
+          Fluttertoast.showToast(msg: "Registrasi berhasil!"); // Show success toast
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MainScreen()),
+          ); // Navigate back to login or main page
+        } catch (e) {
+          setState(() {
+            _errorMessage = _getFriendlyErrorMessage(e);
+          }); 
+        }
       },
       child: Container(
         width: double.infinity,

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/restaurant_model.dart';
+import 'restaurant_model.dart'; // Ensure this import path is correct
 
 class TambahUlasanPage extends StatefulWidget {
   final Restaurant restaurant;
 
-  TambahUlasanPage({required this.restaurant});
+  const TambahUlasanPage({super.key, required this.restaurant});
 
   @override
   _TambahUlasanPageState createState() => _TambahUlasanPageState();

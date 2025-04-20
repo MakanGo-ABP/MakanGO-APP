@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:makango/main.dart';
+import 'package:mobile_app/main.dart';
 
 class TambahRestoPage extends StatelessWidget {
   final TextEditingController namaController = TextEditingController();
   final TextEditingController deskripsiController = TextEditingController();
   final TextEditingController alamatController = TextEditingController();
+
+  TambahRestoPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +196,7 @@ class TambahRestoPage extends StatelessWidget {
               children: [
                 Text(
                   selectedTime != null
-                      ? selectedTime!.format(context)
+                      ? selectedTime.format(context)
                       : "-- : --",
                   style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
                 ),
@@ -239,12 +241,12 @@ class TambahRestoPage extends StatelessWidget {
               SizedBox(height: 5),
               OutlinedButton(
                 onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: const Color(0xFFA80707)),
+                ),
                 child: Text(
                   "Browse files",
                   style: GoogleFonts.poppins(color: const Color(0xFFA80707)),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: const Color(0xFFA80707)),
                 ),
               ),
             ],

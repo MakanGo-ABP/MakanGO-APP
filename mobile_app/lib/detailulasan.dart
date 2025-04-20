@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DetailUlasanPage extends StatelessWidget {
+  const DetailUlasanPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Ambil data dari arguments

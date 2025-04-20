@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_app/main.dart';
 import 'email_page.dart';
+import 'package:mobile_app/services/auth.services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,6 +28,9 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AuthService authService = AuthService();
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -140,7 +148,42 @@ class LoginScreen extends StatelessWidget {
                         ),
                         minimumSize: const Size(double.infinity, 50),
                       ),
-                      onPressed: () {},
+                      onPressed: () async {
+                        User? user = await authService.signInWithGoogle();
+                        if (user != null) {
+                          final userRef = _firestore.collection('User').doc(user.uid);
+
+                          // Check if the user already exists
+                          final userDoc = await userRef.get();
+                          if (!userDoc.exists) {
+                            // If user does not exist, add the new user to the collection
+                            await userRef.set({
+                              'name': user.displayName,
+                              'email': user.email,
+                              'uid': user.uid,
+                              'created_at': FieldValue.serverTimestamp(),
+                            });
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Berhasil masuk sebagai ${user.displayName}",
+                              ),
+                            ),
+                          );
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => MainScreen()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Google Sign-In dibatalkan"),
+                            ),
+                          );
+                        }
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
