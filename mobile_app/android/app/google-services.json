@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "356572542322",
+    "project_id": "makango-a8511",
+    "storage_bucket": "makango-a8511.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:356572542322:android:dd99596484801479b959eb",
+        "android_client_info": {
+          "package_name": "com.example.mobile_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "356572542322-m6v99d37qca3he0sd0d3n3vlepp27b4a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mobile_app",
+            "certificate_hash": "4dedaf8166bf65a85c663d7c9054e83113b9cb33"
+          }
+        },
+        {
+          "client_id": "356572542322-i6ejfa7ac6rgg98rvk8frbjvhev0gm9u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFXnI8If6joEdAnC5_hF7XZrKwngy6tDA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "356572542322-h4p88e44n5grvo26ajrl84mos54jrd8o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
