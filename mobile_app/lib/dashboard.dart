@@ -3,43 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'restaurantdetail_page.dart';
 import 'search_page.dart';
 import 'tambahulasan.dart';
-import 'restaurant_model.dart';
+import 'model/restaurant_model.dart';
+import 'package:mobile_app/services/restaurant_services.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage({super.key});
 
-  final List<Restaurant> restaurants = [
-    Restaurant(
-      name: "McDonalds - Podomoro Park",
-      imagePath: "assets/card_mcd.png",
-      time: "00:00 - 23:59",
-      category: "Cepat saji, Ayam, Makanan penutup, Ice cream",
-      rating: 4.8,
-      reviews: 150,
-      address:
-          "Jl. Podomoro Boulevard Utara No.1, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
-    ),
-    Restaurant(
-      name: "Mixue Bojongsoang",
-      imagePath: "assets/card_mixue.png",
-      time: "10:00 - 21:00",
-      category: "Makanan lezat dengan pemandangan indah.",
-      rating: 4.8,
-      reviews: 150,
-      address:
-          "Jl. Terusan Buah Batu, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
-    ),
-    Restaurant(
-      name: "Mie Ayam Bakso Jabrig",
-      imagePath: "assets/card_jabrig.png",
-      time: "09:00 - 21:00",
-      category: "Hidangan khas yang bikin ketagihan.",
-      rating: 4.5,
-      reviews: 120,
-      address:
-          "Gg. PGA, Lengkong, Kec. Bojongsoang, Kabupaten Bandung, Jawa Barat 40287",
-    ),
-  ];
+  final RestaurantService _restaurantService = RestaurantService();
 
   @override
   Widget build(BuildContext context) {
@@ -61,14 +31,30 @@ class DashboardPage extends StatelessWidget {
                   const SizedBox(height: 20),
                   _buildSectionTitle("Tempat Populer Terdekat"),
                   const SizedBox(height: 10),
-                  Column(
-                    children:
-                        restaurants
-                            .map(
-                              (restaurant) =>
-                                  _buildRestaurantCard(restaurant, context),
-                            )
-                            .toList(),
+                  StreamBuilder<List<Restaurant>>(
+                    stream: _restaurantService.getRestaurants(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return Center(
+                          child: Text(
+                            'Error fetching restaurants: ${snapshot.error}',
+                            style: GoogleFonts.poppins(fontSize: 14, color: Colors.red),
+                          ),
+                        );
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text('No restaurants found'));
+                      }
+                      final restaurants = snapshot.data!;
+                      return Column(
+                        children: restaurants.map((restaurant) {
+                          return _buildRestaurantCard(restaurant, context);
+                        }).toList(),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -83,10 +69,10 @@ class DashboardPage extends StatelessWidget {
     return Column(
       children: [
         Stack(
-          clipBehavior: Clip.none, // Supaya search bar bisa keluar dari header
+          clipBehavior: Clip.none,
           children: [
             Container(
-              height: 350, // Tambah tinggi agar search bar muat
+              height: 350,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 image: DecorationImage(
@@ -105,7 +91,6 @@ class DashboardPage extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Bagian Lokasi
                         Row(
                           children: [
                             Image.asset(
@@ -125,9 +110,7 @@ class DashboardPage extends StatelessWidget {
                                       width: 20,
                                       height: 20,
                                     ),
-                                    const SizedBox(
-                                      width: 5,
-                                    ), // Kasih jarak kecil
+                                    const SizedBox(width: 5),
                                     Text(
                                       "Lokasi",
                                       style: GoogleFonts.poppins(
@@ -137,9 +120,7 @@ class DashboardPage extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(
-                                  height: 4,
-                                ), // Jarak kecil ke bawah
+                                const SizedBox(height: 4),
                                 Text(
                                   "Bojongsoang, Bandung",
                                   style: GoogleFonts.poppins(
@@ -152,21 +133,16 @@ class DashboardPage extends StatelessWidget {
                             ),
                           ],
                         ),
-
-                        // Bagian Notifikasi
                         Stack(
-                          alignment:
-                              Alignment
-                                  .centerRight, // Pastikan ikon sejajar kanan
+                          alignment: Alignment.centerRight,
                           children: [
                             Image.asset(
                               "assets/logo_notifikasi.png",
-                              width:
-                                  50, // Ubah ukuran supaya lebih proporsional
+                              width: 50,
                               height: 50,
                             ),
                             Positioned(
-                              right: 0, // Biar mepet ke kanan
+                              right: 0,
                               top: 0,
                               child: Container(
                                 padding: const EdgeInsets.all(5),
@@ -216,14 +192,14 @@ class DashboardPage extends StatelessWidget {
             Positioned(
               left: 20,
               right: 20,
-              bottom: 80, // Supaya search bar keluar dari header
+              bottom: 80,
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => SearchPage(),
-                    ), // Ganti NextPage dengan tujuan
+                    ),
                   );
                 },
                 child: Container(
@@ -253,14 +229,6 @@ class DashboardPage extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      // Expanded(
-                      //   child: TextField(
-                      //     decoration: InputDecoration(
-                      //       hintText: "Cari makanan...",
-                      //       border: InputBorder.none,
-                      //     ),
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
@@ -268,9 +236,7 @@ class DashboardPage extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(
-          height: 30,
-        ), // Tambahkan jarak agar konten setelahnya tidak ketutupan
+        const SizedBox(height: 30),
       ],
     );
   }
@@ -282,7 +248,6 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  //Buat bagian aneka kuliner menarik
   Widget _buildCategoryGrid() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -358,9 +323,7 @@ class DashboardPage extends StatelessWidget {
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return SizedBox(
-                            width:
-                                constraints.maxWidth *
-                                0.7, // Batasin lebar teks
+                            width: constraints.maxWidth * 0.7,
                             child: Text(
                               restaurant.name,
                               maxLines: 1,
@@ -394,11 +357,26 @@ class DashboardPage extends StatelessWidget {
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return SizedBox(
-                            width:
-                                constraints.maxWidth *
-                                0.7, // Batasin lebar teks
+                            width: constraints.maxWidth * 0.7,
                             child: Text(
                               restaurant.category,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 5),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SizedBox(
+                            width: constraints.maxWidth * 0.7,
+                            child: Text(
+                              restaurant.address,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
@@ -415,9 +393,7 @@ class DashboardPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      TambahUlasanPage(restaurant: restaurant),
+                              builder: (context) => TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
                         },
@@ -490,7 +466,7 @@ class DashboardPage extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFE52020), Color(0xFFA80707)], // Warna gradien
+                colors: [Color(0xFFE52020), Color(0xFFA80707)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

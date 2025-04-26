@@ -45,6 +45,11 @@ dependencies:
   google_sign_in: ^6.3.0
   fluttertoast: ^8.2.12
   cloud_firestore: ^5.6.6
+  firebase_storage: ^12.4.5
+  image_picker: ^1.1.2
+  video_player: ^2.9.5
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

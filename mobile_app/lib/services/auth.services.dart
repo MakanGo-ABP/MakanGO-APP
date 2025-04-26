@@ -1,15 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:mobile_app/dashboard.dart';
-import '/login.dart';
-
-ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
 
 class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   User? get currentUser => firebaseAuth.currentUser;
 
@@ -48,15 +44,19 @@ class AuthService {
     required String password,
   }) async {
     return await firebaseAuth.signInWithEmailAndPassword(
-      email: email, password: password);
+      email: email,
+      password: password,
+    );
   }
 
   Future<UserCredential> createAccount({
     required String email,
     required String password,
   }) async {
-    return await firebaseAuth.createUserWithEmailAndPassword
-    (email: email, password: password);
+    return await firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
   Future<void> signOut() async {
@@ -79,7 +79,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    AuthCredential credential = 
+    AuthCredential credential =
         EmailAuthProvider.credential(email: email, password: password);
     await currentUser!.reauthenticateWithCredential(credential);
     await currentUser!.delete();
@@ -91,9 +91,36 @@ class AuthService {
     required String newPassword,
     required String email,
   }) async {
-    AuthCredential credential = 
+    AuthCredential credential =
         EmailAuthProvider.credential(email: email, password: currentPassword);
     await currentUser!.reauthenticateWithCredential(credential);
     await currentUser!.updatePassword(newPassword);
+  }
+
+  Future<void> saveUserData({
+    required String uid,
+    required String name,
+    required String email,
+  }) async {
+    await _firestore.collection('User').doc(uid).set({
+      'name': name,
+      'email': email,
+      'created_at': FieldValue.serverTimestamp(),
+      'uid': uid,
+      'jumlah_review': 0,
+      'level': 0,
+    });
+  }
+
+  String getFriendlyErrorMessage(dynamic error) {
+    if (error.toString().contains('email')) {
+      return "Format email tidak valid.";
+    } else if (error.toString().contains('password')) {
+      return "Kata sandi harus terdiri dari minimal 6 karakter.";
+    } else if (error.toString().contains('already in use')) {
+      return "Email ini sudah terdaftar. Silakan gunakan email lain.";
+    } else {
+      return "Terjadi kesalahan. Silakan coba lagi.";
+    }
   }
 }

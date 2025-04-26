@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'restaurant_model.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'tambahulasan.dart'; // Ensure this file contains the TambahUlasanPage class
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'model/restaurant_model.dart';
+import 'tambahulasan.dart';
+import 'package:mobile_app/services/openstreetmap_service.dart';
 
 class RestaurantDetailPage extends StatelessWidget {
   final Restaurant restaurant;
+  final OpenStreetMapService _openStreetMapService = OpenStreetMapService();
 
   RestaurantDetailPage({required this.restaurant});
 
@@ -28,16 +32,19 @@ class RestaurantDetailPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 300,
-              child: Image.asset(restaurant.imagePath, fit: BoxFit.fill),
+              // Use Image.network if imagePath is a URL from Firestore
+              child: restaurant.imagePath.startsWith('http')
+                  ? Image.network(restaurant.imagePath, fit: BoxFit.fill)
+                  : Image.asset(restaurant.imagePath, fit: BoxFit.fill),
             ),
-            Scroll(),
+            Scroll(context),
           ],
         ),
       ),
     );
   }
 
-  Scroll() {
+  Widget Scroll(BuildContext context) {
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       maxChildSize: 1.0,
@@ -108,33 +115,46 @@ class RestaurantDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      color: Colors.black54,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 5),
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.65,
-                      ),
-                      child: Text(
-                        restaurant.address,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
                           color: Colors.black54,
+                          size: 16,
                         ),
-                      ),
+                        const SizedBox(width: 5),
+                        FutureBuilder<String>(
+                          future: _openStreetMapService.getAddressFromCoordinates(
+                            restaurant.latitude,
+                            restaurant.longitude,
+                          ),
+                          builder: (context, snapshot) {
+                            String address = 'Fetching address...';
+                            if (snapshot.hasData) {
+                              address = snapshot.data!;
+                            } else if (snapshot.hasError) {
+                              address = 'Error fetching address';
+                            }
+                            return ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.65,
+                              ),
+                              child: Text(
+                                address,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
-                    Positioned(
-                      top: 160,
-                      right: 0,
-                      child: _buildRatingBox(
-                        restaurant.rating,
-                        restaurant.reviews,
-                      ),
-                    ),
+                    // Rating box
+                    _buildRatingBox(restaurant.rating, restaurant.reviews),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -155,12 +175,10 @@ class RestaurantDetailPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      TambahUlasanPage(restaurant: restaurant),
+                              builder: (context) => TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
-                        }, //add router here
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,
                           shadowColor: Colors.transparent,
@@ -240,6 +258,45 @@ class RestaurantDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
+                  "Lokasi",
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 200,
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(restaurant.latitude, restaurant.longitude),
+                      initialZoom: 15.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        userAgentPackageName: 'com.example.makango',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(restaurant.latitude, restaurant.longitude),
+                            width: 80,
+                            height: 80,
+                            child: Icon(
+                              Icons.location_pin,
+                              color: Colors.red,
+                              size: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
                   "Ulasan",
                   style: GoogleFonts.poppins(
                     fontSize: 16,
@@ -253,59 +310,59 @@ class RestaurantDetailPage extends StatelessWidget {
       },
     );
   }
-}
 
-Widget _buildRatingBox(double rating, int reviews) {
-  return Container(
-    width: 70,
-    height: 65,
-    padding: EdgeInsets.symmetric(vertical: 0),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 5,
-          spreadRadius: 2,
-          offset: Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Column(
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(vertical: 6),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE52020), Color(0xFFA80707)], // Warna gradien
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+  Widget _buildRatingBox(double rating, int reviews) {
+    return Container(
+      width: 70,
+      height: 65,
+      padding: EdgeInsets.symmetric(vertical: 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 5,
+            spreadRadius: 2,
+            offset: Offset(0, 3),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.star, color: Colors.amber, size: 18),
-              SizedBox(width: 4),
-              Text(
-                rating.toStringAsFixed(1).replaceAll('.', ','),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE52020), Color(0xFFA80707)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.star, color: Colors.amber, size: 18),
+                SizedBox(width: 4),
+                Text(
+                  rating.toStringAsFixed(1).replaceAll('.', ','),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        SizedBox(height: 6),
-        Text(
-          reviews.toString(),
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-      ],
-    ),
-  );
+          SizedBox(height: 6),
+          Text(
+            reviews.toString(),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
 }
