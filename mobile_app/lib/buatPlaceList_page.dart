@@ -4,6 +4,8 @@ import 'package:mobile_app/daftartempat.dart';
 import 'dashboard.dart';
 
 class BuatplacelistPage extends StatelessWidget {
+  const BuatplacelistPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

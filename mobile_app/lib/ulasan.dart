@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detailulasan.dart';
-import 'detailulasan.dart';
 
 class UlasanPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  UlasanPage({super.key});
 
   @override
   Widget build(BuildContext context) {

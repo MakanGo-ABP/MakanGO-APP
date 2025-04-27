@@ -38,7 +38,8 @@ class Restaurant {
       reviews: (data?['reviews'] is num) ? data!['reviews'] as int : 0,
       address: data?['address']?.toString() ?? '',
       latitude: (data?['latitude'] is num) ? data!['latitude'].toDouble() : 0.0,
-      longitude: (data?['longitude'] is num) ? data!['longitude'].toDouble() : 0.0,
+      longitude:
+          (data?['longitude'] is num) ? data!['longitude'].toDouble() : 0.0,
     );
   }
 

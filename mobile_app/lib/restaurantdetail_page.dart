@@ -14,7 +14,7 @@ class RestaurantDetailPage extends StatelessWidget {
   final OpenStreetMapService _openStreetMapService = OpenStreetMapService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  RestaurantDetailPage({required this.restaurant});
+  RestaurantDetailPage({super.key, required this.restaurant});
 
   @override
   Widget build(BuildContext context) {

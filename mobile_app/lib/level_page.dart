@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 // import 'package:makango/main.dart';
 
 class LevelPage extends StatelessWidget {
+  const LevelPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

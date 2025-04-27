@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_app/DaftartempatIsi_page.dart';
-import 'package:mobile_app/daftartempat.dart';
-import 'package:mobile_app/detailulasan.dart';
 import 'main.dart';
 
 class TambahtempatPage extends StatefulWidget {
