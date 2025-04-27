@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_app/services/auth.services.dart'; // Adjust the import path
 import 'otp.dart';
 import 'register.dart';
+import 'main.dart'; // Import your main page
 
 class EmailPage extends StatefulWidget {
   const EmailPage({super.key});
@@ -13,13 +15,49 @@ class EmailPage extends StatefulWidget {
 class _EmailPageState extends State<EmailPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService(); // Initialize AuthService
   bool _isPasswordVisible = false;
+  bool _isLoading = false; // To show loading state
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // Handle login
+  Future<void> _handleLogin() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Call signIn from AuthService
+      final userCredential = await _authService.signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (userCredential.user != null) {
+        // Navigate to MainPage on successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MainScreen()), // Replace with your MainPage
+        );
+      }
+    } catch (e) {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_authService.getFriendlyErrorMessage(e)),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -124,7 +162,7 @@ class _EmailPageState extends State<EmailPage> {
             // Input Kata Sandi dengan Toggle Visible/Unvisible
             TextField(
               controller: _passwordController,
-              obscureText: !_isPasswordVisible, // Kontrol visibility
+              obscureText: !_isPasswordVisible,
               decoration: InputDecoration(
                 hintText: "Masukkan Kata Sandi Anda...",
                 hintStyle: GoogleFonts.poppins(
@@ -197,22 +235,7 @@ class _EmailPageState extends State<EmailPage> {
             // Tombol Kirim
             const SizedBox(height: 30),
             GestureDetector(
-              onTap: () {
-                // Validasi input sebelum navigasi (opsional)
-                if (_emailController.text.isEmpty ||
-                    _passwordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Email dan kata sandi tidak boleh kosong'),
-                    ),
-                  );
-                  return;
-                }
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => OtpPage()),
-                );
-              },
+              onTap: _isLoading ? null : _handleLogin, // Disable button when loading
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 15),
@@ -225,14 +248,16 @@ class _EmailPageState extends State<EmailPage> {
                   borderRadius: BorderRadius.circular(50),
                 ),
                 child: Center(
-                  child: Text(
-                    "Kirim",
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(
+                          "Kirim",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
             ),

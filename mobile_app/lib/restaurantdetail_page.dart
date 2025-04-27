@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'model/restaurant_model.dart';
 import 'tambahulasan.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'detailulasan.dart';
 
 class RestaurantDetailPage extends StatelessWidget {
   final Restaurant restaurant;
 
   RestaurantDetailPage({required this.restaurant});
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
