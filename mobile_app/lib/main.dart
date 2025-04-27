@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_app/buatPlaceList_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mobile_app/introductionScreen.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'buatPlaceList_page.dart';
@@ -14,9 +15,7 @@ import 'ulasan.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -50,7 +49,7 @@ class _SplashWrapperState extends State<SplashWrapper> {
     Timer(const Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const IntroScreen()),
       );
     });
   }
@@ -71,10 +70,10 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
+  // Hapus TambahRestoPage dari list _pages
   final List<Widget> _pages = [
     DashboardPage(),
     UlasanPage(),
-    TambahRestoPage(),
     BuatplacelistPage(),
     ProfilPage(),
   ];
@@ -98,7 +97,7 @@ class _MainScreenState extends State<MainScreen> {
         type: BottomNavigationBarType.fixed,
         showSelectedLabels: true,
         showUnselectedLabels: true,
-        items: [
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_filled, size: 30),
             label: "Beranda",
@@ -106,32 +105,6 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.reviews, size: 30),
             label: "Ulasan",
-          ),
-          BottomNavigationBarItem(
-            icon: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFFE52020), Color(0xFFA80707)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.add_home_rounded,
-                    color: Colors.white,
-                    size: 35,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text("Tambah Resto", style: TextStyle(fontSize: 12)),
-              ],
-            ),
-            label: "",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.bookmark_outlined, size: 30),
