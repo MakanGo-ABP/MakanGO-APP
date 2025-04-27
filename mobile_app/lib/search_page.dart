@@ -66,7 +66,7 @@ class _SearchPageState extends State<SearchPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Text(
-                    "Bingung mau Makan apa? temukan beragam review di MakanGo",
+                    "Bingung mau Makan apa? Temukan beragam review di MakanGo",
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       color: Colors.white,
@@ -98,8 +98,12 @@ class _SearchPageState extends State<SearchPage> {
                       Expanded(
                         child: TextField(
                           controller: _searchController,
-                          decoration: const InputDecoration(
-                            hintText: "—Cari makanan...",
+                          decoration: InputDecoration(
+                            hintText: "Cari makanan (contoh: bakso, mie ayam)...",
+                            hintStyle: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                             border: InputBorder.none,
                           ),
                           onChanged: (value) {
@@ -164,17 +168,17 @@ class _SearchPageState extends State<SearchPage> {
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(
                       child: Text(
-                        'Tidak ada restoran ditemukan',
+                        'Tidak ada restoran ditemukan. Coba kata lain (contoh: bakso, mie ayam)',
                         style: GoogleFonts.poppins(fontSize: 14),
+                        textAlign: TextAlign.center,
                       ),
                     );
                   }
                   final restaurantMatches = snapshot.data!;
                   return Column(
-                    children:
-                        restaurantMatches.map((match) {
-                          return _buildRestaurantCard(match, context);
-                        }).toList(),
+                    children: restaurantMatches.map((match) {
+                      return _buildRestaurantCard(match, context);
+                    }).toList(),
                   );
                 },
               ),
@@ -212,20 +216,33 @@ class _SearchPageState extends State<SearchPage> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(15),
                   ),
-                  child: Image.asset(
-                    restaurant.imagePath,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: 150,
-                    errorBuilder:
-                        (context, error, stackTrace) => Container(
+                  child: restaurant.imagePath.startsWith('http')
+                      ? Image.network(
+                          restaurant.imagePath,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
                           height: 150,
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: Icon(Icons.image_not_supported),
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.image_not_supported),
+                            ),
+                          ),
+                        )
+                      : Image.asset(
+                          restaurant.imagePath,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 150,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.image_not_supported),
+                            ),
                           ),
                         ),
-                  ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10),
@@ -305,7 +322,7 @@ class _SearchPageState extends State<SearchPage> {
                           return SizedBox(
                             width: constraints.maxWidth * 0.7,
                             child: Text(
-                              'Matched: ${matchedFields.join(', ').replaceAll('name', 'Nama').replaceAll('category', 'Kategori').replaceAll('address', 'Alamat')}',
+                              'Cocok: ${matchedFields.join(', ').replaceAll('name', 'Nama').replaceAll('category', 'Kategori').replaceAll('address', 'Alamat')}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
@@ -323,9 +340,7 @@ class _SearchPageState extends State<SearchPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      TambahUlasanPage(restaurant: restaurant),
+                              builder: (context) => TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
                         },

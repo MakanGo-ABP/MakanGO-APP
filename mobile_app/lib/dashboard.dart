@@ -40,7 +40,7 @@ class DashboardPage extends StatelessWidget {
                       if (snapshot.hasError) {
                         return Center(
                           child: Text(
-                            'Error fetching restaurants: ${snapshot.error}',
+                            'Error: ${snapshot.error}',
                             style: GoogleFonts.poppins(fontSize: 14, color: Colors.red),
                           ),
                         );
@@ -308,12 +308,33 @@ class DashboardPage extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-                  child: Image.asset(
-                    restaurant.imagePath,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: 150,
-                  ),
+                  child: restaurant.imagePath.startsWith('http')
+                      ? Image.network(
+                          restaurant.imagePath,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 150,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.image_not_supported),
+                            ),
+                          ),
+                        )
+                      : Image.asset(
+                          restaurant.imagePath,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 150,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            height: 150,
+                            color: Colors.grey[300],
+                            child: const Center(
+                              child: Icon(Icons.image_not_supported),
+                            ),
+                          ),
+                        ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(10),

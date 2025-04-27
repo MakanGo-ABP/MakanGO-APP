@@ -5,17 +5,29 @@ import 'package:mobile_app/services/restaurant_match.dart';
 class RestaurantService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Stream to get all restaurants from Firestore
+  // Preprocess text: convert to lowercase and remove commas/periods
+  String _preprocessText(String text) {
+    return text.toLowerCase().replaceAll(RegExp(r'[,.]'), '');
+  }
+
+  // Stream to get all restaurants from Firestore with preprocessed fields
   Stream<List<Restaurant>> getRestaurants() {
-    return _firestore
-        .collection('Restaurant')
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => Restaurant.fromFirestore(doc))
-                  .toList(),
-        );
+    return _firestore.collection('Restaurant').snapshots().map((snapshot) =>
+        snapshot.docs.map((doc) {
+          final restaurant = Restaurant.fromFirestore(doc);
+          return Restaurant(
+            id: restaurant.id,
+            name: _preprocessText(restaurant.name),
+            imagePath: restaurant.imagePath,
+            time: restaurant.time,
+            category: _preprocessText(restaurant.category),
+            rating: restaurant.rating,
+            reviews: restaurant.reviews,
+            address: _preprocessText(restaurant.address),
+            latitude: restaurant.latitude,
+            longitude: restaurant.longitude,
+          );
+        }).toList());
   }
 
   // Search restaurants by keyword in name, category, or address
@@ -26,8 +38,10 @@ class RestaurantService {
       return Stream.value([]);
     }
 
+    // Preprocess keyword: lowercase and remove commas/periods
+    String processedKeyword = _preprocessText(keyword);
     // Split keyword into individual words
-    List<String> searchWords = keyword.toLowerCase().split(RegExp(r'\s+'));
+    List<String> searchWords = processedKeyword.split(RegExp(r'\s+'));
 
     return Stream.fromFuture(_performSearch(searchWords));
   }
@@ -36,87 +50,47 @@ class RestaurantService {
     print('Search words: $searchWords');
     Set<RestaurantMatch> allMatches = {};
 
-    // Process each word
-    for (String word in searchWords) {
-      if (word.isEmpty) {
-        print('Skipping empty word');
-        continue;
+    // Fetch all restaurants once
+    QuerySnapshot snapshot = await _firestore.collection('Restaurant').get();
+
+    // Process each restaurant
+    for (var doc in snapshot.docs) {
+      Restaurant restaurant = Restaurant.fromFirestore(doc);
+      // Preprocess fields
+      String name = _preprocessText(restaurant.name);
+      String category = _preprocessText(restaurant.category);
+      String address = _preprocessText(restaurant.address);
+      List<String> matchedFields = [];
+
+      // Check each search word
+      for (String word in searchWords) {
+        if (word.isEmpty) {
+          print('Skipping empty word');
+          continue;
+        }
+
+        // Check if word matches any field
+        if (name.contains(word)) {
+          matchedFields.add('name');
+        }
+        if (category.contains(word)) {
+          matchedFields.add('category');
+        }
+        if (address.contains(word)) {
+          matchedFields.add('address');
+        }
       }
 
-      String searchKey = word;
-      String endKey = '$searchKey\uf8ff';
-
-      print('Querying for word: "$searchKey"');
-
-      // Query for name_lower
-      QuerySnapshot nameSnapshot =
-          await _firestore
-              .collection('Restaurant')
-              .where('name_lower', isGreaterThanOrEqualTo: searchKey)
-              .where('name_lower', isLessThanOrEqualTo: endKey)
-              .get();
-      print('Name query returned ${nameSnapshot.docs.length} results');
-
-      // Query for category_lower
-      QuerySnapshot categorySnapshot =
-          await _firestore
-              .collection('Restaurant')
-              .where('category_lower', isGreaterThanOrEqualTo: searchKey)
-              .where('category_lower', isLessThanOrEqualTo: endKey)
-              .get();
-      print('Category query returned ${categorySnapshot.docs.length} results');
-
-      // Query for address_lower
-      QuerySnapshot addressSnapshot =
-          await _firestore
-              .collection('Restaurant')
-              .where('address_lower', isGreaterThanOrEqualTo: searchKey)
-              .where('address_lower', isLessThanOrEqualTo: endKey)
-              .get();
-      print('Address query returned ${addressSnapshot.docs.length} results');
-
-      // Process name matches
-      for (var doc in nameSnapshot.docs) {
-        Restaurant restaurant = Restaurant.fromFirestore(doc);
-        allMatches.add(
-          RestaurantMatch(restaurant: restaurant, matchedFields: ['name']),
-        );
-      }
-
-      // Process category matches
-      for (var doc in categorySnapshot.docs) {
-        Restaurant restaurant = Restaurant.fromFirestore(doc);
-        allMatches.add(
-          RestaurantMatch(restaurant: restaurant, matchedFields: ['category']),
-        );
-      }
-
-      // Process address matches
-      for (var doc in addressSnapshot.docs) {
-        Restaurant restaurant = Restaurant.fromFirestore(doc);
-        allMatches.add(
-          RestaurantMatch(restaurant: restaurant, matchedFields: ['address']),
-        );
+      // If there are matches, add to results
+      if (matchedFields.isNotEmpty) {
+        allMatches.add(RestaurantMatch(
+          restaurant: restaurant, // Use original restaurant, not preprocessed
+          matchedFields: matchedFields,
+        ));
       }
     }
 
-    // Combine matched fields for restaurants that appear in multiple queries
-    Map<String, RestaurantMatch> consolidatedMatches = {};
-    for (var match in allMatches) {
-      String restaurantId = match.restaurant.id;
-      if (consolidatedMatches.containsKey(restaurantId)) {
-        consolidatedMatches[restaurantId]!.matchedFields.addAll(
-          match.matchedFields,
-        );
-      } else {
-        consolidatedMatches[restaurantId] = RestaurantMatch(
-          restaurant: match.restaurant,
-          matchedFields: List.from(match.matchedFields),
-        );
-      }
-    }
-
-    print('Total unique matches: ${consolidatedMatches.length}');
-    return consolidatedMatches.values.toList();
+    print('Total unique matches: ${allMatches.length}');
+    return allMatches.toList();
   }
 }
