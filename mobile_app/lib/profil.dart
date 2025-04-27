@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'level_page.dart';
-// import 'ubahProfile.dart';
+import 'ubahProfile.dart';
 
 class ProfilPage extends StatefulWidget {
   @override
@@ -10,6 +12,46 @@ class ProfilPage extends StatefulWidget {
 
 class _ProfilPageState extends State<ProfilPage> {
   bool isReviewTabActive = true; // Tab default = "Ulasan"
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String _name = '';
+  String _username = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData(); // Panggil fungsi untuk mengambil data pengguna
+  }
+
+  // Fungsi untuk mengambil data pengguna dari Firestore
+  Future<void> _loadUserData() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('User').doc(user.uid).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          setState(() {
+            _name = userData['name'] ?? 'Nama Tidak Ditemukan';
+            _username =
+                userData['username'] != null && userData['username'].isNotEmpty
+                    ? '@${userData['username']}'
+                    : '@username'; // Tambahkan @ di depan username
+          });
+        } else {
+          setState(() {
+            _name = 'Nama Tidak Ditemukan';
+            _username = '@username';
+          });
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data pengguna: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +119,11 @@ class _ProfilPageState extends State<ProfilPage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ProfilPage()),
-                    );
+                      MaterialPageRoute(builder: (context) => UbahProfilPage()),
+                    ).then((value) {
+                      // Refresh data setelah kembali dari UbahProfilPage
+                      _loadUserData();
+                    });
                   },
                   child: Container(
                     decoration: BoxDecoration(
@@ -99,7 +144,7 @@ class _ProfilPageState extends State<ProfilPage> {
           ),
           const SizedBox(height: 10),
           Text(
-            "@Nabilah",
+            _username,
             style: GoogleFonts.poppins(
               fontSize: 18,
               color: Colors.white,
@@ -107,7 +152,7 @@ class _ProfilPageState extends State<ProfilPage> {
             ),
           ),
           Text(
-            "Nabilah Nuur Azizah",
+            _name,
             style: GoogleFonts.poppins(
               color: Colors.white,
               fontWeight: FontWeight.w500,

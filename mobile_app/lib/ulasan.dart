@@ -70,7 +70,11 @@ class UlasanPage extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore.collection('Review').orderBy('createdAt', descending: true).snapshots(),
+        stream:
+            _firestore
+                .collection('Review')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -79,7 +83,9 @@ class UlasanPage extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('Belum ada ulasan.', style: GoogleFonts.poppins()));
+            return Center(
+              child: Text('Belum ada ulasan.', style: GoogleFonts.poppins()),
+            );
           }
 
           final reviews = snapshot.data!.docs;
@@ -104,7 +110,8 @@ class UlasanPage extends StatelessWidget {
                 return FutureBuilder<DocumentSnapshot>(
                   future: _firestore.collection('User').doc(userId).get(),
                   builder: (context, userSnapshot) {
-                    if (userSnapshot.connectionState == ConnectionState.waiting) {
+                    if (userSnapshot.connectionState ==
+                        ConnectionState.waiting) {
                       return Card(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
@@ -121,16 +128,21 @@ class UlasanPage extends StatelessWidget {
                       );
                     }
 
-                    final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                    final userData =
+                        userSnapshot.data!.data() as Map<String, dynamic>;
                     final username = userData['name'] as String? ?? 'Unknown';
-                    final avatarUrl = userData['avatarUrl'] as String? ?? 'assets/ex_profile.png';
+                    final avatarUrl =
+                        userData['avatarUrl'] as String? ??
+                        'assets/ex_profile.png';
 
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailUlasanPage(reviewId: reviewId),
+                            builder:
+                                (context) =>
+                                    DetailUlasanPage(reviewId: reviewId),
                           ),
                         );
                       },
@@ -147,25 +159,28 @@ class UlasanPage extends StatelessWidget {
                               borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(16),
                               ),
-                              child: photoUrls.isNotEmpty
-                                  ? Image.network(
-                                      photoUrls[0],
-                                      height: 180,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                              child:
+                                  photoUrls.isNotEmpty
+                                      ? Image.network(
+                                        photoUrls[0],
+                                        height: 180,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Image.asset(
+                                                  'assets/sample_food.png',
+                                                  height: 180,
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                      )
+                                      : Image.asset(
                                         'assets/sample_food.png',
                                         height: 180,
                                         width: double.infinity,
                                         fit: BoxFit.cover,
                                       ),
-                                    )
-                                  : Image.asset(
-                                      'assets/sample_food.png',
-                                      height: 180,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -173,7 +188,9 @@ class UlasanPage extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    description.isNotEmpty ? description : 'No description',
+                                    description.isNotEmpty
+                                        ? description
+                                        : 'No description',
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.poppins(fontSize: 14),
@@ -182,17 +199,24 @@ class UlasanPage extends StatelessWidget {
                                   Row(
                                     children: [
                                       CircleAvatar(
-                                        backgroundImage: avatarUrl.startsWith('http')
-                                            ? NetworkImage(avatarUrl)
-                                            : AssetImage(avatarUrl) as ImageProvider,
+                                        backgroundImage:
+                                            avatarUrl.startsWith('http')
+                                                ? NetworkImage(avatarUrl)
+                                                : AssetImage(avatarUrl)
+                                                    as ImageProvider,
                                         radius: 12,
                                       ),
                                       SizedBox(width: 8),
-                                      Text(
-                                        username,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
+                                      Container(
+                                        width: 90,
+                                        child: Text(
+                                          username,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                       Spacer(),
