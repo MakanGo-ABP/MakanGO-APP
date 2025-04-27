@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'level_page.dart';
 
 class ProfilPage extends StatefulWidget {
+  const ProfilPage({super.key});
+
   @override
   _ProfilPageState createState() => _ProfilPageState();
 }
@@ -289,11 +291,7 @@ class _ProfilPageState extends State<ProfilPage> {
         children: [
           Row(
             children: const [
-              Icon(
-                Icons.location_pin,
-                color: const Color(0xFFA80707),
-                size: 25,
-              ),
+              Icon(Icons.location_pin, color: Color(0xFFA80707), size: 25),
               SizedBox(width: 5),
               Text("1 Daftar Tempat", style: TextStyle(fontSize: 14)),
             ],

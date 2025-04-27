@@ -19,7 +19,8 @@ class UlasanServices {
   }) async {
     try {
       // Calculate average rating
-      double averageRating = (foodRating + serviceRating + ambianceRating) / 3.0;
+      double averageRating =
+          (foodRating + serviceRating + ambianceRating) / 3.0;
 
       // Create review data
       Map<String, dynamic> reviewData = {
@@ -37,7 +38,11 @@ class UlasanServices {
 
       // Handle photo uploads if provided
       if (photos != null && photos.isNotEmpty) {
-        List<String> photoUrls = await _uploadPhotos(userId, restaurantId, photos);
+        List<String> photoUrls = await _uploadPhotos(
+          userId,
+          restaurantId,
+          photos,
+        );
         reviewData['photoUrls'] = photoUrls;
       }
 
@@ -62,7 +67,10 @@ class UlasanServices {
 
   // Upload photos to Firebase Storage
   Future<List<String>> _uploadPhotos(
-      String userId, String restaurantId, List<File> photos) async {
+    String userId,
+    String restaurantId,
+    List<File> photos,
+  ) async {
     try {
       List<String> photoUrls = [];
       for (int i = 0; i < photos.length; i++) {
@@ -82,7 +90,10 @@ class UlasanServices {
 
   // Upload video to Firebase Storage
   Future<String> _uploadVideo(
-      String userId, String restaurantId, File video) async {
+    String userId,
+    String restaurantId,
+    File video,
+  ) async {
     try {
       String fileName =
           'reviews/$restaurantId/$userId/video_${DateTime.now().millisecondsSinceEpoch}.mp4';
@@ -98,10 +109,11 @@ class UlasanServices {
   // Update restaurant's average rating
   Future<void> _updateRestaurantAverageRating(String restaurantId) async {
     try {
-      QuerySnapshot reviews = await _firestore
-          .collection('Reviews')
-          .where('restaurantId', isEqualTo: restaurantId)
-          .get();
+      QuerySnapshot reviews =
+          await _firestore
+              .collection('Reviews')
+              .where('restaurantId', isEqualTo: restaurantId)
+              .get();
 
       if (reviews.docs.isEmpty) return;
 
@@ -124,9 +136,7 @@ class UlasanServices {
   }
 
   // Update user's review count (existing function)
-  Future<void> checkSumReview({
-    required String userId,
-  }) async {
+  Future<void> checkSumReview({required String userId}) async {
     try {
       await _firestore.collection('User').doc(userId).update({
         'jumlah_review': FieldValue.increment(1),

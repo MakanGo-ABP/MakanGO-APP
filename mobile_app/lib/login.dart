@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'email_page.dart';
+import 'package:mobile_app/services/auth.services.dart'; // Import your AuthService
+import 'main.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,6 +26,8 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authService = AuthService(); // Create AuthService instance
+
     return Scaffold(
       body: Stack(
         children: [
@@ -55,9 +60,7 @@ class LoginScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24.0,
-                      ), // Padding kiri & kanan
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Text(
                         "Ayo Daftar untuk Melanjutkan!",
                         style: GoogleFonts.poppins(
@@ -65,16 +68,12 @@ class LoginScreen extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           height: 1.2,
                         ),
-                        textAlign: TextAlign.center, // Biar teks rata tengah
+                        textAlign: TextAlign.center,
                       ),
                     ),
-
-                    const SizedBox(height: 10), // Jarak ke bawah
-
+                    const SizedBox(height: 10),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24.0,
-                      ), // Padding kiri & kanan
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Text(
                         "Untuk melanjutkan, Anda perlu membuat akun. Pilih metode login di bawah",
                         style: GoogleFonts.poppins(
@@ -82,40 +81,29 @@ class LoginScreen extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                           color: Colors.grey,
                         ),
-                        textAlign: TextAlign.center, // Biar teks rata tengah
-                        softWrap: true, // Supaya wrapping otomatis
+                        textAlign: TextAlign.center,
+                        softWrap: true,
                       ),
                     ),
-
                     const SizedBox(height: 20),
                     // Button Login Email
-                    // Button dengan Gradien
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => EmailPage(),
-                          ), // Ganti NextPage dengan tujuan
+                          MaterialPageRoute(builder: (context) => EmailPage()),
                         );
                       },
                       child: Container(
-                        width: double.infinity, // Lebar full
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 15,
-                        ), // Tinggi tombol
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFE52020),
-                              Color(0xFFA80707),
-                            ], // Warna gradien
+                            colors: [Color(0xFFE52020), Color(0xFFA80707)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(
-                            50,
-                          ), // Bikin rounded
+                          borderRadius: BorderRadius.circular(50),
                         ),
                         child: Center(
                           child: Text(
@@ -123,13 +111,12 @@ class LoginScreen extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white, // Warna teks
+                              color: Colors.white,
                             ),
                           ),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 10),
                     // Button Login Google
                     OutlinedButton(
@@ -140,14 +127,29 @@ class LoginScreen extends StatelessWidget {
                         ),
                         minimumSize: const Size(double.infinity, 50),
                       ),
-                      onPressed: () {},
+                      onPressed: () async {
+                        final user = await authService.signInWithGoogle();
+                        if (user != null) {
+                          // Save user data to Firestore
+                          await authService.saveUserData(
+                            uid: user.uid,
+                            name: user.displayName ?? 'Unknown',
+                            email: user.email ?? '',
+                          );
+                          // Navigate to home screen
+                          Fluttertoast.showToast(msg: "Registrasi berhasil!");
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MainScreen(),
+                            ),
+                          );
+                        }
+                      },
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset(
-                            'assets/google_logo.png',
-                            width: 20,
-                          ), // Tambahkan logo Google
+                          Image.asset('assets/google_logo.png', width: 20),
                           const SizedBox(width: 10),
                           Text(
                             "Lanjut dengan Google",

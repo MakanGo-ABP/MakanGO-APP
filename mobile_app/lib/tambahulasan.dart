@@ -10,7 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class TambahUlasanPage extends StatefulWidget {
   final Restaurant restaurant;
 
-  TambahUlasanPage({required this.restaurant});
+  const TambahUlasanPage({super.key, required this.restaurant});
 
   @override
   _TambahUlasanPageState createState() => _TambahUlasanPageState();
@@ -37,7 +37,7 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
 
   // Pick multiple photos
   Future<void> _pickPhotos() async {
-    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+    final List<XFile> pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles != null) {
       setState(() {
         selectedPhotos = pickedFiles.map((file) => File(file.path)).toList();
@@ -47,7 +47,9 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
 
   // Pick a video
   Future<void> _pickVideo() async {
-    final XFile? pickedFile = await _picker.pickVideo(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickVideo(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       setState(() {
         selectedVideo = File(pickedFile.path);
@@ -74,9 +76,9 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
   // Submit review
   Future<void> _submitReview() async {
     if (ulasanController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ulasan tidak boleh kosong')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ulasan tidak boleh kosong')));
       return;
     }
 
@@ -92,7 +94,8 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
 
       await ulasanServices.submitReview(
         userId: user.uid,
-        restaurantId: widget.restaurant.id, // Ensure Restaurant model has an 'id' field
+        restaurantId:
+            widget.restaurant.id, // Ensure Restaurant model has an 'id' field
         foodRating: makananRating,
         serviceRating: pelayananRating,
         ambianceRating: suasanaRating,
@@ -101,9 +104,9 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
         video: selectedVideo,
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ulasan berhasil dikirim')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ulasan berhasil dikirim')));
       Navigator.pop(context);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -284,12 +287,17 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
                 children: [
                   OutlinedButton.icon(
                     onPressed: _pickPhotos,
-                    icon: Icon(Icons.camera_alt, color: const Color(0xFFA80707)),
+                    icon: Icon(
+                      Icons.camera_alt,
+                      color: const Color(0xFFA80707),
+                    ),
                     label: Text(
                       selectedPhotos.isEmpty
                           ? "Tambah foto"
                           : "${selectedPhotos.length} foto dipilih",
-                      style: GoogleFonts.poppins(color: const Color(0xFFA80707)),
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFFA80707),
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: const Color(0xFFA80707)),
@@ -300,7 +308,9 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
                     icon: Icon(Icons.videocam, color: const Color(0xFFA80707)),
                     label: Text(
                       selectedVideo == null ? "Tambah video" : "Video dipilih",
-                      style: GoogleFonts.poppins(color: const Color(0xFFA80707)),
+                      style: GoogleFonts.poppins(
+                        color: const Color(0xFFA80707),
+                      ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: const Color(0xFFA80707)),
@@ -332,16 +342,17 @@ class _TambahUlasanPageState extends State<TambahUlasanPage> {
           borderRadius: BorderRadius.circular(50),
         ),
         child: Center(
-          child: isSubmitting
-              ? CircularProgressIndicator(color: Colors.white)
-              : Text(
-                  "Kirim ulasan",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+          child:
+              isSubmitting
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                    "Kirim ulasan",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
         ),
       ),
     );

@@ -10,7 +10,7 @@ class RestaurantDetailPage extends StatelessWidget {
   final Restaurant restaurant;
   final OpenStreetMapService _openStreetMapService = OpenStreetMapService();
 
-  RestaurantDetailPage({required this.restaurant});
+  RestaurantDetailPage({super.key, required this.restaurant});
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +33,10 @@ class RestaurantDetailPage extends StatelessWidget {
               width: double.infinity,
               height: 300,
               // Use Image.network if imagePath is a URL from Firestore
-              child: restaurant.imagePath.startsWith('http')
-                  ? Image.network(restaurant.imagePath, fit: BoxFit.fill)
-                  : Image.asset(restaurant.imagePath, fit: BoxFit.fill),
+              child:
+                  restaurant.imagePath.startsWith('http')
+                      ? Image.network(restaurant.imagePath, fit: BoxFit.fill)
+                      : Image.asset(restaurant.imagePath, fit: BoxFit.fill),
             ),
             Scroll(context),
           ],
@@ -126,10 +127,11 @@ class RestaurantDetailPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 5),
                         FutureBuilder<String>(
-                          future: _openStreetMapService.getAddressFromCoordinates(
-                            restaurant.latitude,
-                            restaurant.longitude,
-                          ),
+                          future: _openStreetMapService
+                              .getAddressFromCoordinates(
+                                restaurant.latitude,
+                                restaurant.longitude,
+                              ),
                           builder: (context, snapshot) {
                             String address = 'Fetching address...';
                             if (snapshot.hasData) {
@@ -139,7 +141,8 @@ class RestaurantDetailPage extends StatelessWidget {
                             }
                             return ConstrainedBox(
                               constraints: BoxConstraints(
-                                maxWidth: MediaQuery.of(context).size.width * 0.65,
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.65,
                               ),
                               child: Text(
                                 address,
@@ -175,7 +178,9 @@ class RestaurantDetailPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => TambahUlasanPage(restaurant: restaurant),
+                              builder:
+                                  (context) =>
+                                      TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
                         },
@@ -269,19 +274,26 @@ class RestaurantDetailPage extends StatelessWidget {
                   height: 200,
                   child: FlutterMap(
                     options: MapOptions(
-                      initialCenter: LatLng(restaurant.latitude, restaurant.longitude),
+                      initialCenter: LatLng(
+                        restaurant.latitude,
+                        restaurant.longitude,
+                      ),
                       initialZoom: 15.0,
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate:
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         subdomains: ['a', 'b', 'c'],
                         userAgentPackageName: 'com.example.makango',
                       ),
                       MarkerLayer(
                         markers: [
                           Marker(
-                            point: LatLng(restaurant.latitude, restaurant.longitude),
+                            point: LatLng(
+                              restaurant.latitude,
+                              restaurant.longitude,
+                            ),
                             width: 80,
                             height: 80,
                             child: Icon(
