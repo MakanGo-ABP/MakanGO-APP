@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_app/pengaturan.dart';
-import 'level_page.dart';
-import 'ubahProfile.dart';
+import 'package:mobile_app/level_page.dart';
+import 'package:mobile_app/ubahProfile.dart';
 import 'package:mobile_app/services/profile_service.dart';
+import 'package:mobile_app/services/place_list_service.dart'; // Import PlaceListService
+import 'package:mobile_app/model/place_list_model.dart'; // Import PlaceList model
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -18,6 +20,7 @@ class _ProfilPageState extends State<ProfilPage> {
   String _username = '';
   Map<String, dynamic> _userData = {};
   final ProfileService _profileService = ProfileService();
+  final PlaceListService _placeListService = PlaceListService(); // Initialize PlaceListService
   bool _isLoading = true;
 
   @override
@@ -130,7 +133,6 @@ class _ProfilPageState extends State<ProfilPage> {
                       context,
                       MaterialPageRoute(builder: (context) => UbahProfilPage()),
                     ).then((value) {
-                      // Refresh data setelah kembali dari UbahProfilPage
                       _loadUserData();
                     });
                   },
@@ -181,9 +183,8 @@ class _ProfilPageState extends State<ProfilPage> {
     int xpForNextLevel;
     double progress;
 
-    // Pastikan bar abu-abu penuh jika XP 0
     if (xp == 0) {
-      progress = 0.0; // Bar akan penuh abu-abu
+      progress = 0.0;
     } else {
       if (level == 1) {
         xpForNextLevel = 50;
@@ -193,11 +194,10 @@ class _ProfilPageState extends State<ProfilPage> {
         progress = (xp - 50) / 50.0;
       } else {
         xpForNextLevel = xp;
-        progress = 1.0; // Gold adalah level tertinggi
+        progress = 1.0;
       }
     }
 
-    // Tentukan level name dan ikon
     if (level == 1) {
       levelName = "Bronze";
       levelIcon = "assets/logo_bronze.png";
@@ -256,7 +256,7 @@ class _ProfilPageState extends State<ProfilPage> {
                     context,
                     MaterialPageRoute(builder: (context) => LevelPage()),
                   ).then((value) {
-                    _loadUserData(); // Refresh data setelah kembali dari LevelPage
+                    _loadUserData();
                   });
                 },
                 child: Container(
@@ -351,7 +351,7 @@ class _ProfilPageState extends State<ProfilPage> {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
               color: isActive ? const Color(0xFFA80707) : Colors.black,
@@ -374,124 +374,199 @@ class _ProfilPageState extends State<ProfilPage> {
         children: [
           Image.asset("assets/logo_empty.png", width: 150),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             "Ulasan Anda kosong!",
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
-          const Text("Anda belum memiliki ulasan, mulailah membuatnya"),
+          Text(
+            "Anda belum memiliki ulasan, mulailah membuatnya",
+            style: GoogleFonts.poppins(),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildPlaceList() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 25),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Icon(Icons.location_pin, color: Color(0xFFA80707), size: 25),
-              SizedBox(width: 5),
-              Text("1 Daftar Tempat", style: TextStyle(fontSize: 14)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+    return StreamBuilder<List<PlaceList>>(
+      stream: _placeListService.getPlaceLists(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFA80707)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Gagal memuat daftar tempat: ${snapshot.error}',
+              style: GoogleFonts.poppins(),
             ),
-            elevation: 4,
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          );
+        }
+
+        final placeLists = snapshot.data ?? [];
+
+        if (placeLists.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset("assets/logo_empty.png", width: 150),
+                const SizedBox(height: 10),
+                Text(
+                  "Daftar Tempat Anda kosong!",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "Mulai buat daftar tempat Anda sekarang",
+                  style: GoogleFonts.poppins(),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFE52020), Color(0xFFA80707)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.location_pin,
-                          color: Colors.white,
-                          size: 90,
-                        ),
+                  const Icon(Icons.location_pin, color: Color(0xFFA80707), size: 25),
+                  const SizedBox(width: 5),
+                  Text(
+                    "${placeLists.length} Daftar Tempat",
+                    style: GoogleFonts.poppins(fontSize: 14),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: placeLists.length,
+                  itemBuilder: (context, index) {
+                    final placeList = placeLists[index];
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
+                      elevation: 4,
+                      color: Colors.white,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              children: const [
-                                Icon(
-                                  Icons.public,
-                                  size: 16,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(width: 5),
-                                Text(
-                                  "Daftar Tempat Publik",
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            const Text(
-                              "Laper tengah malem",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                CircleAvatar(
-                                  radius: 10,
-                                  backgroundImage: AssetImage(
-                                    _userData['avatarUrl'] ??
-                                        "assets/ex_profile.png",
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFE52020), Color(0xFFA80707)],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.location_pin,
+                                    color: Colors.white,
+                                    size: 90,
                                   ),
                                 ),
-                                const SizedBox(width: 5),
-                                Text(_name),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.location_pin,
-                                  color: Colors.red,
-                                  size: 16,
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            placeList.isPublic
+                                                ? Icons.public
+                                                : Icons.lock,
+                                            size: 16,
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            placeList.isPublic
+                                                ? "Daftar Tempat Publik"
+                                                : "Daftar Tempat Pribadi",
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Text(
+                                        placeList.title,
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 5),
+                                      Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 10,
+                                            backgroundImage: AssetImage(
+                                              _userData['avatarUrl'] ??
+                                                  "assets/ex_profile.png",
+                                            ),
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            _name,
+                                            style: GoogleFonts.poppins(),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 20),
+                                      Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.location_pin,
+                                            color: Colors.red,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            "${placeList.restaurantIds.length} tempat",
+                                            style: GoogleFonts.poppins(),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                SizedBox(width: 5),
-                                Text("1 tempat"),
                               ],
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
