@@ -16,30 +16,47 @@ class _ProfilPageState extends State<ProfilPage> {
   bool isReviewTabActive = true; // Tab default = "Ulasan"
   String _name = '';
   String _username = '';
-  final ProfileService _profileService =
-      ProfileService(); // Instance ProfileService
+  Map<String, dynamic> _userData = {};
+  final ProfileService _profileService = ProfileService();
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData(); // Panggil fungsi untuk mengambil data pengguna
+    _loadUserData();
   }
 
-  // Fungsi untuk mengambil data pengguna menggunakan ProfileService
   Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final userData = await _profileService.loadUserData();
       setState(() {
+        _userData = userData;
         _name = userData['name']!;
         _username = userData['username']!;
+        _isLoading = false;
       });
     } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFA80707)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -98,9 +115,11 @@ class _ProfilPageState extends State<ProfilPage> {
                   color: Colors.white.withOpacity(0.2),
                 ),
               ),
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 45,
-                backgroundImage: AssetImage("assets/ex_profile.png"),
+                backgroundImage: AssetImage(
+                  _userData['avatarUrl'] ?? "assets/ex_profile.png",
+                ),
               ),
               Positioned(
                 bottom: 0,
@@ -155,6 +174,44 @@ class _ProfilPageState extends State<ProfilPage> {
   }
 
   Widget _buildXPBar() {
+    int xp = _userData['xp'] ?? 0;
+    int level = _userData['level'] ?? 1;
+    String levelName;
+    String levelIcon;
+    int xpForNextLevel;
+    double progress;
+
+    // Pastikan bar abu-abu penuh jika XP 0
+    if (xp == 0) {
+      progress = 0.0; // Bar akan penuh abu-abu
+    } else {
+      if (level == 1) {
+        xpForNextLevel = 50;
+        progress = xp / 50.0;
+      } else if (level == 2) {
+        xpForNextLevel = 100;
+        progress = (xp - 50) / 50.0;
+      } else {
+        xpForNextLevel = xp;
+        progress = 1.0; // Gold adalah level tertinggi
+      }
+    }
+
+    // Tentukan level name dan ikon
+    if (level == 1) {
+      levelName = "Bronze";
+      levelIcon = "assets/logo_bronze.png";
+      xpForNextLevel = 50;
+    } else if (level == 2) {
+      levelName = "Silver";
+      levelIcon = "assets/logo_silver.png";
+      xpForNextLevel = 100;
+    } else {
+      levelName = "Gold";
+      levelIcon = "assets/logo_gold.png";
+      xpForNextLevel = xp;
+    }
+
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -177,14 +234,14 @@ class _ProfilPageState extends State<ProfilPage> {
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.white,
-                    backgroundImage: AssetImage("assets/logo_bronze.png"),
+                    backgroundImage: AssetImage(levelIcon),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    "Level 1 • 0 XP",
+                    "Level $level • $xp XP",
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -198,7 +255,9 @@ class _ProfilPageState extends State<ProfilPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => LevelPage()),
-                  );
+                  ).then((value) {
+                    _loadUserData(); // Refresh data setelah kembali dari LevelPage
+                  });
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -216,7 +275,9 @@ class _ProfilPageState extends State<ProfilPage> {
                   child: Row(
                     children: [
                       Text(
-                        "10 XP ke Level 2",
+                        level < 3
+                            ? "${xpForNextLevel - xp} XP ke Level ${level + 1}"
+                            : "Max Level",
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -239,7 +300,7 @@ class _ProfilPageState extends State<ProfilPage> {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: 0.1,
+              value: progress.clamp(0.0, 1.0),
               minHeight: 10,
               backgroundColor: Colors.grey[300],
               valueColor: const AlwaysStoppedAnimation<Color>(
@@ -397,10 +458,11 @@ class _ProfilPageState extends State<ProfilPage> {
                             const SizedBox(height: 5),
                             Row(
                               children: [
-                                const CircleAvatar(
+                                CircleAvatar(
                                   radius: 10,
                                   backgroundImage: AssetImage(
-                                    "assets/ex_profile.png",
+                                    _userData['avatarUrl'] ??
+                                        "assets/ex_profile.png",
                                   ),
                                 ),
                                 const SizedBox(width: 5),

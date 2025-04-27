@@ -1,14 +1,98 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-// import 'package:makango/main.dart';
+import 'package:mobile_app/services/profile_service.dart';
 
-class LevelPage extends StatelessWidget {
+class LevelPage extends StatefulWidget {
   const LevelPage({super.key});
 
   @override
+  _LevelPageState createState() => _LevelPageState();
+}
+
+class _LevelPageState extends State<LevelPage> {
+  final ProfileService _profileService = ProfileService();
+  Map<String, dynamic> _userData = {};
+  List<Map<String, dynamic>> _reviews = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      // Pastikan data pengguna diinisialisasi
+      await _profileService.initializeUserData();
+      final userData = await _profileService.loadUserData();
+      final reviews = await _profileService.getReviews();
+      setState(() {
+        _userData = userData;
+        _reviews = reviews;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFFA80707)),
+        ),
+      );
+    }
+
+    int xp = _userData['xp'] ?? 0;
+    int level = _userData['level'] ?? 1;
+    String levelName;
+    String levelIcon;
+    int xpForNextLevel;
+    double progress;
+
+    // Pastikan bar abu-abu penuh jika XP 0
+    if (xp == 0) {
+      progress = 0.0; // Bar akan penuh abu-abu
+    } else {
+      if (level == 1) {
+        xpForNextLevel = 50;
+        progress = xp / 50.0;
+      } else if (level == 2) {
+        xpForNextLevel = 100;
+        progress = (xp - 50) / 50.0;
+      } else {
+        xpForNextLevel = xp;
+        progress = 1.0; // Gold adalah level tertinggi
+      }
+    }
+
+    // Tentukan level name dan ikon
+    if (level == 1) {
+      levelName = "Bronze";
+      levelIcon = "assets/logo_bronze.png";
+      xpForNextLevel = 50;
+    } else if (level == 2) {
+      levelName = "Silver";
+      levelIcon = "assets/logo_silver.png";
+      xpForNextLevel = 100;
+    } else {
+      levelName = "Gold";
+      levelIcon =
+          "assets/logo_gold.png"; // Ganti "red.png" dengan ikon gold yang sesuai
+      xpForNextLevel = xp;
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -41,14 +125,23 @@ class LevelPage extends StatelessWidget {
                       color: Colors.grey.withOpacity(0.2),
                     ),
                   ),
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 45,
-                    backgroundImage: AssetImage("assets/ex_profile.png"),
+                    backgroundImage: AssetImage(
+                      _userData['avatarUrl'] ?? "assets/ex_profile.png",
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              _buildXPBar(),
+              _buildXPBar(
+                xp: xp,
+                level: level,
+                levelName: levelName,
+                levelIcon: levelIcon,
+                xpForNextLevel: xpForNextLevel,
+                progress: progress.clamp(0.0, 1.0),
+              ),
               const SizedBox(height: 20),
               Scroll(context),
             ],
@@ -58,7 +151,14 @@ class LevelPage extends StatelessWidget {
     );
   }
 
-  Widget _buildXPBar() {
+  Widget _buildXPBar({
+    required int xp,
+    required int level,
+    required String levelName,
+    required String levelIcon,
+    required int xpForNextLevel,
+    required double progress,
+  }) {
     return Container(
       padding: const EdgeInsets.all(10),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -81,14 +181,14 @@ class LevelPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 14,
                     backgroundColor: Colors.white,
-                    backgroundImage: AssetImage("assets/logo_bronze.png"),
+                    backgroundImage: AssetImage(levelIcon),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    "Level 1 • 0 XP",
+                    "Level $level • $xp XP",
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -97,40 +197,32 @@ class LevelPage extends StatelessWidget {
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => LevelPage(),
-                  //   ), // Ganti NextPage dengan tujuan
-                  // );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE52020), Color(0xFFA80707)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
                   ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE52020), Color(0xFFA80707)],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    ),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        "10 XP ke Level 2",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      level < 3
+                          ? "${xpForNextLevel - xp} XP ke Level ${level + 1}"
+                          : "Max Level",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -139,7 +231,7 @@ class LevelPage extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: 0.1,
+              value: progress,
               minHeight: 10,
               backgroundColor: Colors.grey[300],
               valueColor: const AlwaysStoppedAnimation<Color>(
@@ -154,14 +246,10 @@ class LevelPage extends StatelessWidget {
     );
   }
 
-  Scroll(BuildContext context) {
+  Widget Scroll(BuildContext context) {
     return Container(
-      width:
-          MediaQuery.of(
-            context,
-          ).size.width, // Set width to the full screen width
-      height: MediaQuery.of(context).size.height * 0.75, // 75% of screen height
-      // width: MediaQuery.of(context).size.width * 1, // Fit the screen width
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.only(
@@ -170,15 +258,13 @@ class LevelPage extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Shadow color
-            blurRadius: 10, // Blur radius
-            offset: const Offset(0, -4), // Shadow offset (top shadow)
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      margin: const EdgeInsets.symmetric(
-        horizontal: 0,
-      ), // Remove side margins to make it flush
+      margin: const EdgeInsets.symmetric(horizontal: 0),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       clipBehavior: Clip.hardEdge,
       child: SingleChildScrollView(
@@ -194,70 +280,143 @@ class LevelPage extends StatelessWidget {
                 ],
               ),
             ),
-            Center(child: Image.asset("assets/empty.png")),
-            const SizedBox(height: 5),
-            Center(
-              child: Text(
-                "Riwayat Anda kosong!",
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+            if (_reviews.isEmpty)
+              Column(
+                children: [
+                  Center(child: Image.asset("assets/empty.png")),
+                  const SizedBox(height: 5),
+                  Center(
+                    child: Text(
+                      "Riwayat Anda kosong!",
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Anda belum memiliki ulasan, mulailah membuatnya",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.grey.shade500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              )
+            else
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Riwayat Ulasan",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ..._reviews.map((review) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            review['restaurantName'],
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.restaurant_menu_rounded,
+                                color: Colors.black54,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                review['category'],
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                color: Colors.black54,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                review['time'],
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                color: Colors.black54,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 5),
+                              ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.65,
+                                ),
+                                child: Text(
+                                  review['address'],
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            "Ulasan: ${review['comment']}",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            review['hasImage']
+                                ? "+10 XP (Dengan Gambar)"
+                                : "+5 XP (Tanpa Gambar)",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFA80707),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Anda belum memiliki ulasan, mulailah membuatnya",
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Colors.grey.shade500,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            // Row(
-            //   children: [
-            //     Icon(Icons.restaurant_menu_rounded, color: Colors.black54, size: 16),
-            //     const SizedBox(width: 5),
-            //     Text(
-            //       restaurant.category,
-            //       style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-            //     ),
-            //   ],
-            // ),
-            // const SizedBox(height: 10),
-            // Row(
-            //   children: [
-            //     Icon(Icons.access_time, color: Colors.black54, size: 16),
-            //     const SizedBox(width: 5),
-            //     Text(
-            //       restaurant.time,
-            //       style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-            //     ),
-            //   ],
-            // ),
-            // const SizedBox(height: 2),
-            // Row(
-            //   children: [
-            //     Icon(Icons.location_on_outlined, color: Colors.black54, size: 16),
-            //     const SizedBox(width: 5),
-            //     ConstrainedBox(
-            //       constraints: BoxConstraints(
-            //         maxWidth: MediaQuery.of(context).size.width * 0.65,
-            //       ),
-            //       child: Text(
-            //         restaurant.address,
-            //         style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-            //       ),
-            //     ),
-            //   ],
-            // ),
-            // const SizedBox(height: 20),
-            // Text(
-            //   "Ulasan",
-            //   style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
-            // ),
           ],
         ),
       ),

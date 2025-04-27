@@ -34,29 +34,32 @@ class RestaurantDetailPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 300,
-              child: restaurant.imagePath.startsWith('http')
-                  ? Image.network(
-                      restaurant.imagePath,
-                      fit: BoxFit.fill,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 300,
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: Icon(Icons.image_not_supported),
-                        ),
+              child:
+                  restaurant.imagePath.startsWith('http')
+                      ? Image.network(
+                        restaurant.imagePath,
+                        fit: BoxFit.fill,
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              height: 300,
+                              color: Colors.grey[300],
+                              child: const Center(
+                                child: Icon(Icons.image_not_supported),
+                              ),
+                            ),
+                      )
+                      : Image.asset(
+                        restaurant.imagePath,
+                        fit: BoxFit.fill,
+                        errorBuilder:
+                            (context, error, stackTrace) => Container(
+                              height: 300,
+                              color: Colors.grey[300],
+                              child: const Center(
+                                child: Icon(Icons.image_not_supported),
+                              ),
+                            ),
                       ),
-                    )
-                  : Image.asset(
-                      restaurant.imagePath,
-                      fit: BoxFit.fill,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        height: 300,
-                        color: Colors.grey[300],
-                        child: const Center(
-                          child: Icon(Icons.image_not_supported),
-                        ),
-                      ),
-                    ),
             ),
             Scroll(context),
           ],
@@ -151,7 +154,9 @@ class RestaurantDetailPage extends StatelessWidget {
                             maxWidth: MediaQuery.of(context).size.width * 0.65,
                           ),
                           child: Text(
-                            restaurant.address.isEmpty ? 'No address available' : restaurant.address,
+                            restaurant.address.isEmpty
+                                ? 'No address available'
+                                : restaurant.address,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: Colors.black54,
@@ -181,7 +186,9 @@ class RestaurantDetailPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => TambahUlasanPage(restaurant: restaurant),
+                              builder:
+                                  (context) =>
+                                      TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
                         },
@@ -276,14 +283,19 @@ class RestaurantDetailPage extends StatelessWidget {
                   child: FlutterMap(
                     options: MapOptions(
                       initialCenter: LatLng(
-                        restaurant.latitude != 0.0 ? restaurant.latitude : -6.914744,
-                        restaurant.longitude != 0.0 ? restaurant.longitude : 107.609810,
+                        restaurant.latitude != 0.0
+                            ? restaurant.latitude
+                            : -6.914744,
+                        restaurant.longitude != 0.0
+                            ? restaurant.longitude
+                            : 107.609810,
                       ),
                       initialZoom: 15.0,
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate:
+                            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                         subdomains: ['a', 'b', 'c'],
                         userAgentPackageName: 'com.example.makango',
                       ),
@@ -291,8 +303,12 @@ class RestaurantDetailPage extends StatelessWidget {
                         markers: [
                           Marker(
                             point: LatLng(
-                              restaurant.latitude != 0.0 ? restaurant.latitude : -6.914744,
-                              restaurant.longitude != 0.0 ? restaurant.longitude : 107.609810,
+                              restaurant.latitude != 0.0
+                                  ? restaurant.latitude
+                                  : -6.914744,
+                              restaurant.longitude != 0.0
+                                  ? restaurant.longitude
+                                  : 107.609810,
                             ),
                             width: 80,
                             height: 80,

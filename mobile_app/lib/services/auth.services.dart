@@ -22,7 +22,8 @@ class AuthService {
       }
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create a new credential
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -31,7 +32,8 @@ class AuthService {
       );
 
       // Sign in with the credential
-      final UserCredential userCredential = await firebaseAuth.signInWithCredential(credential);
+      final UserCredential userCredential = await firebaseAuth
+          .signInWithCredential(credential);
       return userCredential.user;
     } catch (e) {
       print('Error signing in with Google: $e');
@@ -63,15 +65,11 @@ class AuthService {
     await firebaseAuth.signOut();
   }
 
-  Future<void> resetPassword({
-    required String email,
-  }) async {
+  Future<void> resetPassword({required String email}) async {
     await firebaseAuth.sendPasswordResetEmail(email: email);
   }
 
-  Future<void> updateUsername({
-    required String username,
-  }) async {
+  Future<void> updateUsername({required String username}) async {
     await currentUser!.updateDisplayName(username);
   }
 
@@ -79,8 +77,10 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    AuthCredential credential =
-        EmailAuthProvider.credential(email: email, password: password);
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: email,
+      password: password,
+    );
     await currentUser!.reauthenticateWithCredential(credential);
     await currentUser!.delete();
     await firebaseAuth.signOut();
@@ -91,8 +91,10 @@ class AuthService {
     required String newPassword,
     required String email,
   }) async {
-    AuthCredential credential =
-        EmailAuthProvider.credential(email: email, password: currentPassword);
+    AuthCredential credential = EmailAuthProvider.credential(
+      email: email,
+      password: currentPassword,
+    );
     await currentUser!.reauthenticateWithCredential(credential);
     await currentUser!.updatePassword(newPassword);
   }
@@ -108,7 +110,7 @@ class AuthService {
       'created_at': FieldValue.serverTimestamp(),
       'uid': uid,
       'jumlah_review': 0,
-      'level': 0,
+      'level': 1,
     });
   }
 
