@@ -3,8 +3,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'otp.dart';
 import 'register.dart';
 
-class EmailPage extends StatelessWidget {
+class EmailPage extends StatefulWidget {
   const EmailPage({super.key});
+
+  @override
+  _EmailPageState createState() => _EmailPageState();
+}
+
+class _EmailPageState extends State<EmailPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,19 +32,17 @@ class EmailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 40),
-            // Tombol Back
             // Tombol Back dengan Lingkaran & Shadow
             Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white, // Warna lingkaran
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    // ignore: deprecated_member_use
-                    color: Colors.black.withOpacity(0.2), // Warna shadow
-                    blurRadius: 10, // Besar blur
-                    spreadRadius: 2, // Sebaran shadow
-                    offset: const Offset(0, 4), // Posisi shadow
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -37,7 +51,6 @@ class EmailPage extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-
             const SizedBox(height: 20),
             // Logo & Judul
             Row(
@@ -74,6 +87,7 @@ class EmailPage extends StatelessWidget {
             const SizedBox(height: 10),
             // Input Email
             TextField(
+              controller: _emailController,
               decoration: InputDecoration(
                 hintText: "Masukkan email Anda...",
                 hintStyle: GoogleFonts.poppins(
@@ -86,7 +100,7 @@ class EmailPage extends StatelessWidget {
                     'assets/logo_email.png',
                     width: 25,
                     height: 19,
-                  ), // Sesuaikan path
+                  ),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -100,17 +114,19 @@ class EmailPage extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              "Password Anda",
+              "Kata Sandi Anda",
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 10),
-            // Input Email
+            // Input Kata Sandi dengan Toggle Visible/Unvisible
             TextField(
+              controller: _passwordController,
+              obscureText: !_isPasswordVisible, // Kontrol visibility
               decoration: InputDecoration(
-                hintText: "Masukkan Password Anda...",
+                hintText: "Masukkan Kata Sandi Anda...",
                 hintStyle: GoogleFonts.poppins(
                   color: Colors.grey,
                   fontSize: 14,
@@ -121,7 +137,20 @@ class EmailPage extends StatelessWidget {
                     'assets/logo_key.png',
                     width: 25,
                     height: 19,
-                  ), // Sesuaikan path
+                  ),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
@@ -169,26 +198,31 @@ class EmailPage extends StatelessWidget {
             const SizedBox(height: 30),
             GestureDetector(
               onTap: () {
+                // Validasi input sebelum navigasi (opsional)
+                if (_emailController.text.isEmpty ||
+                    _passwordController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Email dan kata sandi tidak boleh kosong'),
+                    ),
+                  );
+                  return;
+                }
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => OtpPage()),
                 );
               },
               child: Container(
-                width: double.infinity, // Lebar full
-                padding: const EdgeInsets.symmetric(
-                  vertical: 15,
-                ), // Tinggi tombol
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 15),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFE52020),
-                      Color(0xFFA80707),
-                    ], // Warna gradien
+                    colors: [Color(0xFFE52020), Color(0xFFA80707)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(50), // Bikin rounded
+                  borderRadius: BorderRadius.circular(50),
                 ),
                 child: Center(
                   child: Text(
@@ -196,7 +230,7 @@ class EmailPage extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white, // Warna teks
+                      color: Colors.white,
                     ),
                   ),
                 ),

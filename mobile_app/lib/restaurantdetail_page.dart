@@ -311,6 +311,426 @@ class RestaurantDetailPage extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                // Daftar Ulasan dari Firestore
+                StreamBuilder<QuerySnapshot>(
+                  stream:
+                      _firestore
+                          .collection('Review')
+                          .where('restaurantId', isEqualTo: restaurant.id)
+                          .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'Belum ada ulasan untuk restoran ini.',
+                          style: GoogleFonts.poppins(),
+                        ),
+                      );
+                    }
+
+                    final reviews = snapshot.data!.docs;
+
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.only(top: 10, bottom: 20),
+                      itemCount: reviews.length,
+                      itemBuilder: (context, index) {
+                        final reviewData =
+                            reviews[index].data() as Map<String, dynamic>;
+                        final reviewId =
+                            reviews[index].id; // Ambil reviewId untuk navigasi
+                        final userId = reviewData['userId'] as String;
+                        final photoUrls =
+                            reviewData['photoUrls'] as List<dynamic>? ?? [];
+                        final description =
+                            reviewData['description'] as String? ??
+                            'No description';
+                        final foodRating =
+                            reviewData['foodRating'] as int? ?? 0;
+                        final serviceRating =
+                            reviewData['serviceRating'] as int? ?? 0;
+                        final ambianceRating =
+                            reviewData['ambianceRating'] as int? ?? 0;
+                        final timestamp = reviewData['createdAt'] as Timestamp?;
+                        final likes = reviewData['likes'] as int? ?? 0;
+
+                        // Format tanggal
+                        String formattedDate = 'Unknown date';
+                        if (timestamp != null) {
+                          final date = timestamp.toDate();
+                          formattedDate = DateFormat(
+                            'dd MMM yyyy',
+                          ).format(date);
+                        }
+
+                        return FutureBuilder<DocumentSnapshot>(
+                          future:
+                              _firestore.collection('User').doc(userId).get(),
+                          builder: (context, userSnapshot) {
+                            if (userSnapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            }
+                            if (userSnapshot.hasError) {
+                              return Center(
+                                child: Text('Error loading user data'),
+                              );
+                            }
+                            if (!userSnapshot.hasData ||
+                                !userSnapshot.data!.exists) {
+                              return SizedBox.shrink();
+                            }
+
+                            final userData =
+                                userSnapshot.data!.data()
+                                    as Map<String, dynamic>;
+                            final username =
+                                userData['name'] as String? ?? 'Unknown';
+                            final avatarUrl =
+                                userData['avatarUrl'] as String? ??
+                                'assets/ex_profile.png';
+                            final userReviews =
+                                userData['reviewCount'] as int? ?? 0;
+                            final userSavedPlaces =
+                                userData['savedPlacesCount'] as int? ?? 0;
+                            final userLevel = userData['level'] as int? ?? 1;
+
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                top: 5.0,
+                                bottom: 20,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Info Pengguna
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 30,
+                                        backgroundImage:
+                                            avatarUrl.startsWith('http')
+                                                ? NetworkImage(avatarUrl)
+                                                : AssetImage(avatarUrl)
+                                                    as ImageProvider,
+                                      ),
+                                      SizedBox(width: 12),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 250,
+                                                child: Text(
+                                                  username,
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              SizedBox(width: 8),
+                                            ],
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            '$userReviews Ulasan • $userSavedPlaces Daftar Tempat',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[200],
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              'Level $userLevel',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.black54,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Spacer(),
+                                    ],
+                                  ),
+                                  SizedBox(height: 16),
+                                  // Rating (Satu baris dengan background linear pada bintang dan angka)
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Makanan',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFE52020),
+                                              Color(0xFFA80707),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              color: Colors.yellow[700],
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              '$foodRating',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        '•',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Pelayanan',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFE52020),
+                                              Color(0xFFA80707),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              color: Colors.yellow[700],
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              '$serviceRating',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        '•',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Suasana',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFFE52020),
+                                              Color(0xFFA80707),
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.star,
+                                              color: Colors.yellow[700],
+                                              size: 16,
+                                            ),
+                                            SizedBox(width: 4),
+                                            Text(
+                                              '$ambianceRating',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  SizedBox(height: 16),
+                                  // Deskripsi
+                                  Text(
+                                    description,
+                                    style: GoogleFonts.poppins(fontSize: 14),
+                                  ),
+                                  SizedBox(height: 8),
+                                  // Teks "Lebih banyak" dengan navigasi ke DetailUlasanPage
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (context) => DetailUlasanPage(
+                                                reviewId: reviewId,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      'Lebih banyak',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Colors.red,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(height: 8),
+                                  // Foto
+                                  if (photoUrls.isNotEmpty)
+                                    SizedBox(
+                                      height: 100,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: photoUrls.length,
+                                        itemBuilder: (context, index) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              right: 8.0,
+                                            ),
+                                            child: Image.network(
+                                              photoUrls[index],
+                                              width: 100,
+                                              height: 100,
+                                              fit: BoxFit.cover,
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => Image.asset(
+                                                    'assets/sample_food.png',
+                                                    width: 100,
+                                                    height: 100,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  SizedBox(height: 8),
+                                  // Tanggal
+                                  Text(
+                                    formattedDate,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.favorite,
+                                        color: Color(0xFFA80707),
+                                        size: 20,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        '$likes',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ],
             ),
           ),

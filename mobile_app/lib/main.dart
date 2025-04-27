@@ -5,10 +5,9 @@ import 'package:mobile_app/introductionScreen.dart';
 import 'firebase_options.dart';
 import 'dashboard.dart';
 import 'profil.dart';
-import 'tambahresto.dart';
 import 'dart:async';
 import 'splash_screen.dart';
-import 'login.dart';
+// import 'introductionScreen.dart';
 import 'ulasan.dart';
 
 void main() async {
@@ -29,6 +28,10 @@ class MyApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       home: const SplashWrapper(),
+      initialRoute: '/intro',
+      routes: {
+        '/intro': (context) => IntroScreen(), // Ganti dengan halaman loginmu
+      },
     );
   }
 }

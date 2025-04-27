@@ -242,26 +242,36 @@ class _UbahProfilPageState extends State<UbahProfilPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+          ),
         ),
-        Row(
-          children: [
-            Text(
-              value.isEmpty ? 'Belum diisi' : value,
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
-            ),
-            SizedBox(width: 8),
-            GestureDetector(
-              onTap: onTap,
-              child: Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value.isEmpty ? 'Belum diisi' : value,
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.black),
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                  softWrap: true,
+                  textAlign: TextAlign.right,
+                ),
               ),
-            ),
-          ],
+              SizedBox(width: 8),
+              GestureDetector(
+                onTap: onTap,
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.grey[400],
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
