@@ -4,8 +4,11 @@ import 'package:mobile_app/pengaturan.dart';
 import 'package:mobile_app/level_page.dart';
 import 'package:mobile_app/ubahProfile.dart';
 import 'package:mobile_app/services/profile_service.dart';
-import 'package:mobile_app/services/place_list_service.dart'; // Import PlaceListService
-import 'package:mobile_app/model/place_list_model.dart'; // Import PlaceList model
+import 'package:mobile_app/services/place_list_service.dart';
+import 'package:mobile_app/model/place_list_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobile_app/services/auth.services.dart';
+import 'package:mobile_app/model/restaurant_model.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -15,12 +18,13 @@ class ProfilPage extends StatefulWidget {
 }
 
 class _ProfilPageState extends State<ProfilPage> {
-  bool isReviewTabActive = true; // Tab default = "Ulasan"
+  bool isReviewTabActive = true;
   String _name = '';
   String _username = '';
   Map<String, dynamic> _userData = {};
   final ProfileService _profileService = ProfileService();
-  final PlaceListService _placeListService = PlaceListService(); // Initialize PlaceListService
+  final PlaceListService _placeListService = PlaceListService();
+  final AuthService _authService = AuthService();
   bool _isLoading = true;
 
   @override
@@ -70,7 +74,7 @@ class _ProfilPageState extends State<ProfilPage> {
           const SizedBox(height: 10),
           _buildTabs(),
           Expanded(
-            child: isReviewTabActive ? _buildEmptyState() : _buildPlaceList(),
+            child: isReviewTabActive ? _buildReviewList() : _buildPlaceList(),
           ),
         ],
       ),
@@ -367,26 +371,211 @@ class _ProfilPageState extends State<ProfilPage> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset("assets/logo_empty.png", width: 150),
-          const SizedBox(height: 10),
-          Text(
-            "Ulasan Anda kosong!",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+  Widget _buildReviewList() {
+    final user = _authService.currentUser;
+    if (user == null) {
+      return Center(
+        child: Text(
+          "Silakan login untuk melihat ulasan Anda",
+          style: GoogleFonts.poppins(),
+        ),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('Reviews')
+          .where('userId', isEqualTo: user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFA80707)),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Gagal memuat ulasan: ${snapshot.error}',
+              style: GoogleFonts.poppins(),
             ),
+          );
+        }
+
+        final reviews = snapshot.data?.docs ?? [];
+
+        if (reviews.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset("assets/logo_empty.png", width: 150),
+                const SizedBox(height: 10),
+                Text(
+                  "Ulasan Anda kosong!",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "Anda belum memiliki ulasan, mulailah membuatnya",
+                  style: GoogleFonts.poppins(),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(left: 25, right: 25, top: 10, bottom: 25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.star, color: Color(0xFFA80707), size: 25),
+                  const SizedBox(width: 5),
+                  Text(
+                    "${reviews.length} Ulasan",
+                    style: GoogleFonts.poppins(fontSize: 14),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: reviews.length,
+                  itemBuilder: (context, index) {
+                    final review = reviews[index];
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('Restaurant')
+                          .doc(review['restaurantId'])
+                          .get(),
+                      builder: (context, restaurantSnapshot) {
+                        if (restaurantSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox.shrink();
+                        }
+                        if (!restaurantSnapshot.hasData ||
+                            !restaurantSnapshot.data!.exists) {
+                          return const SizedBox.shrink();
+                        }
+
+                        final restaurant =
+                            Restaurant.fromFirestore(restaurantSnapshot.data!);
+
+                        return Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 4,
+                          color: Colors.white,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFFE52020),
+                                            Color(0xFFA80707)
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.restaurant,
+                                        color: Colors.white,
+                                        size: 50,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 15),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            restaurant.name,
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.star,
+                                                color: Colors.amber,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                review['averageRating']
+                                                    .toStringAsFixed(1)
+                                                    .replaceAll('.', ','),
+                                                style: GoogleFonts.poppins(),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 5),
+                                          Text(
+                                            review['description'],
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Row(
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 10,
+                                                backgroundImage: AssetImage(
+                                                  _userData['avatarUrl'] ??
+                                                      "assets/ex_profile.png",
+                                                ),
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                _name,
+                                                style: GoogleFonts.poppins(),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-          Text(
-            "Anda belum memiliki ulasan, mulailah membuatnya",
-            style: GoogleFonts.poppins(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

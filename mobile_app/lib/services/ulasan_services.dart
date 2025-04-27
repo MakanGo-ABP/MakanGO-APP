@@ -18,7 +18,7 @@ class UlasanServices {
     File? video,
   }) async {
     try {
-      // Calculate average rating
+      // Calculate average rating for the review
       double averageRating =
           (foodRating + serviceRating + ambianceRating) / 3.0;
 
@@ -53,13 +53,13 @@ class UlasanServices {
       }
 
       // Store review in Firestore
-      await _firestore.collection('Review').add(reviewData);
+      await _firestore.collection('Reviews').add(reviewData);
 
       // Update user's review count
       await checkSumReview(userId: userId);
 
-      // Update restaurant's average rating
-      await _updateRestaurantAverageRating(restaurantId);
+      // Update restaurant's review count and average rating
+      await _updateRestaurantRatingAndReviews(restaurantId, averageRating);
     } catch (e) {
       throw Exception('Error submitting review: $e');
     }
@@ -75,7 +75,7 @@ class UlasanServices {
       List<String> photoUrls = [];
       for (int i = 0; i < photos.length; i++) {
         String fileName =
-            'review/$restaurantId/$userId/photo_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+            'reviews/$restaurantId/$userId/photo_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
         Reference storageRef = _storage.ref().child(fileName);
         UploadTask uploadTask = storageRef.putFile(photos[i]);
         TaskSnapshot snapshot = await uploadTask;
@@ -100,42 +100,59 @@ class UlasanServices {
       Reference storageRef = _storage.ref().child(fileName);
       UploadTask uploadTask = storageRef.putFile(video);
       TaskSnapshot snapshot = await uploadTask;
-      return await snapshot.ref.getDownloadURL();
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
     } catch (e) {
       throw Exception('Error uploading video: $e');
     }
   }
 
-  // Update restaurant's average rating
-  Future<void> _updateRestaurantAverageRating(String restaurantId) async {
+  // Update restaurant's review count and average rating
+  Future<void> _updateRestaurantRatingAndReviews(
+      String restaurantId, double newReviewRating) async {
     try {
-      QuerySnapshot reviews =
-          await _firestore
-              .collection('Reviews')
-              .where('restaurantId', isEqualTo: restaurantId)
-              .get();
-
-      if (reviews.docs.isEmpty) return;
-
-      double totalRating = 0;
-      int reviewCount = reviews.docs.length;
-
-      for (var doc in reviews.docs) {
-        totalRating += doc['averageRating'] as double;
+      // Check if restaurant exists
+      DocumentSnapshot restaurantDoc =
+          await _firestore.collection('Restaurant').doc(restaurantId).get();
+      if (!restaurantDoc.exists) {
+        throw Exception('Restaurant with ID $restaurantId does not exist');
       }
 
-      double newAverageRating = totalRating / reviewCount;
-
-      await _firestore.collection('Restaurants').doc(restaurantId).update({
-        'averageRating': newAverageRating,
-        'reviewCount': reviewCount,
+      // Increment review count
+      await _firestore.collection('Restaurant').doc(restaurantId).update({
+        'reviews': FieldValue.increment(1),
       });
+
+      // Fetch all reviews for the restaurant
+      QuerySnapshot reviews = await _firestore
+          .collection('Reviews')
+          .where('restaurantId', isEqualTo: restaurantId)
+          .get();
+
+      // Calculate average rating
+      double newAverageRating = 0.0;
+      int reviewCount = reviews.docs.length;
+
+      if (reviewCount > 0) {
+        double totalRating = 0;
+        for (var doc in reviews.docs) {
+          totalRating += (doc['averageRating'] as double?) ?? 0.0;
+        }
+        newAverageRating = totalRating / reviewCount;
+      }
+
+      // Update restaurant rating
+      await _firestore.collection('Restaurant').doc(restaurantId).update({
+        'rating': newAverageRating,
+      });
+
+      print('Updated Restaurant $restaurantId: Rating = $newAverageRating, Reviews = $reviewCount');
     } catch (e) {
-      throw Exception('Error updating restaurant rating: $e');
+      throw Exception('Error updating restaurant rating and reviews: $e');
     }
   }
 
-  // Update user's review count (existing function)
+  // Update user's review count
   Future<void> checkSumReview({required String userId}) async {
     try {
       await _firestore.collection('User').doc(userId).update({
