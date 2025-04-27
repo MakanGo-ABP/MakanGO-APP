@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'otp.dart';
+import 'register.dart';
 
 class EmailPage extends StatelessWidget {
   const EmailPage({super.key});
@@ -97,15 +98,80 @@ class EmailPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 10),
+            Text(
+              "Password Anda",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Input Email
+            TextField(
+              decoration: InputDecoration(
+                hintText: "Masukkan Password Anda...",
+                hintStyle: GoogleFonts.poppins(
+                  color: Colors.grey,
+                  fontSize: 14,
+                ),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 19.0, right: 9),
+                  child: Image.asset(
+                    'assets/logo_key.png',
+                    width: 25,
+                    height: 19,
+                  ), // Sesuaikan path
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  "Belum Memiliki Akun?",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegisterPage()),
+                    );
+                  },
+                  child: Text(
+                    "Buat akun",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Color(0xFFA80707),
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
             // Tombol Kirim
+            const SizedBox(height: 30),
             GestureDetector(
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => OtpPage(),
-                  ), // Ganti NextPage dengan tujuan
+                  MaterialPageRoute(builder: (context) => OtpPage()),
                 );
               },
               child: Container(

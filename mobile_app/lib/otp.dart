@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'register.dart';
+import 'main.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 
 class OtpPage extends StatelessWidget {
@@ -83,7 +83,7 @@ class OtpPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RegisterPage(),
+                    builder: (context) => MainScreen(),
                   ), // Ganti NextPage dengan tujuan
                 );
               },

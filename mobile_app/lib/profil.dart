@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'level_page.dart';
+// import 'ubahProfile.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -74,17 +75,25 @@ class _ProfilPageState extends State<ProfilPage> {
               Positioned(
                 bottom: 0,
                 right: 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: Colors.redAccent, width: 2),
-                  ),
-                  padding: const EdgeInsets.all(3),
-                  child: const Icon(
-                    Icons.edit,
-                    size: 16,
-                    color: Colors.redAccent,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfilPage()),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(color: Colors.redAccent, width: 2),
+                    ),
+                    padding: const EdgeInsets.all(3),
+                    child: const Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: Colors.redAccent,
+                    ),
                   ),
                 ),
               ),

@@ -43,7 +43,7 @@ class DaftartempatPage extends StatelessWidget {
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 alignment: Alignment.center,
-                constraints: BoxConstraints(minWidth: 90, minHeight: 50),
+                constraints: BoxConstraints(minWidth: 80, maxHeight: 45),
                 child: Text(
                   "Simpan",
                   style: GoogleFonts.poppins(
@@ -295,7 +295,7 @@ class DaftartempatPage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFE52020),
+                  backgroundColor: Color(0xFFA80707),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -368,7 +368,7 @@ class DaftartempatPage extends StatelessWidget {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Color(0xFFE52020)),
+                      side: BorderSide(color: Color(0xFFA80707)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -383,7 +383,7 @@ class DaftartempatPage extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFE52020),
+                          color: Color(0xFFA80707),
                         ),
                       ),
                     ),
@@ -392,7 +392,7 @@ class DaftartempatPage extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFE52020),
+                      backgroundColor: Color(0xFFA80707),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
