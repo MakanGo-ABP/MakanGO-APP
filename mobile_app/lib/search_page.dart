@@ -62,7 +62,7 @@ class _SearchPageState extends State<SearchPage> {
             flexibleSpace: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const SizedBox(height: 100),
+                const SizedBox(height: 70),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Text(
@@ -99,7 +99,7 @@ class _SearchPageState extends State<SearchPage> {
                         child: TextField(
                           controller: _searchController,
                           decoration: const InputDecoration(
-                            hintText: "—Cari makanan...",
+                            hintText: "Cari makanan...",
                             border: InputBorder.none,
                           ),
                           onChanged: (value) {

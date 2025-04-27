@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mobile_app/pengaturan.dart';
 import 'level_page.dart';
 import 'ubahProfile.dart';
+import 'package:mobile_app/services/profile_service.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -14,10 +14,10 @@ class ProfilPage extends StatefulWidget {
 
 class _ProfilPageState extends State<ProfilPage> {
   bool isReviewTabActive = true; // Tab default = "Ulasan"
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   String _name = '';
   String _username = '';
+  final ProfileService _profileService =
+      ProfileService(); // Instance ProfileService
 
   @override
   void initState() {
@@ -25,33 +25,16 @@ class _ProfilPageState extends State<ProfilPage> {
     _loadUserData(); // Panggil fungsi untuk mengambil data pengguna
   }
 
-  // Fungsi untuk mengambil data pengguna dari Firestore
+  // Fungsi untuk mengambil data pengguna menggunakan ProfileService
   Future<void> _loadUserData() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        DocumentSnapshot userDoc =
-            await _firestore.collection('User').doc(user.uid).get();
-        if (userDoc.exists) {
-          final userData = userDoc.data() as Map<String, dynamic>;
-          setState(() {
-            _name = userData['name'] ?? 'Nama Tidak Ditemukan';
-            _username =
-                userData['username'] != null && userData['username'].isNotEmpty
-                    ? '@${userData['username']}'
-                    : '@username'; // Tambahkan @ di depan username
-          });
-        } else {
-          setState(() {
-            _name = 'Nama Tidak Ditemukan';
-            _username = '@username';
-          });
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat data pengguna: $e')),
-        );
-      }
+    try {
+      final userData = await _profileService.loadUserData();
+      setState(() {
+        _name = userData['name']!;
+        _username = userData['username']!;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
@@ -95,7 +78,12 @@ class _ProfilPageState extends State<ProfilPage> {
             children: [
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white, size: 28),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SettingsPage()),
+                  );
+                },
               ),
             ],
           ),
@@ -209,9 +197,7 @@ class _ProfilPageState extends State<ProfilPage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => LevelPage(),
-                    ), // Ganti NextPage dengan tujuan
+                    MaterialPageRoute(builder: (context) => LevelPage()),
                   );
                 },
                 child: Container(
@@ -369,20 +355,15 @@ class _ProfilPageState extends State<ProfilPage> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFE52020),
-                              Color(0xFFA80707),
-                            ], // Gradasi merah
+                            colors: [Color(0xFFE52020), Color(0xFFA80707)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
-                          borderRadius: BorderRadius.circular(
-                            12,
-                          ), // Biar sudutnya melengkung
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.location_pin,
-                          color: Colors.white, // Biar kontras sama background
+                          color: Colors.white,
                           size: 90,
                         ),
                       ),
@@ -415,15 +396,15 @@ class _ProfilPageState extends State<ProfilPage> {
                             ),
                             const SizedBox(height: 5),
                             Row(
-                              children: const [
-                                CircleAvatar(
+                              children: [
+                                const CircleAvatar(
                                   radius: 10,
                                   backgroundImage: AssetImage(
                                     "assets/ex_profile.png",
                                   ),
                                 ),
-                                SizedBox(width: 5),
-                                Text("Nabilah"),
+                                const SizedBox(width: 5),
+                                Text(_name),
                               ],
                             ),
                             const SizedBox(height: 20),

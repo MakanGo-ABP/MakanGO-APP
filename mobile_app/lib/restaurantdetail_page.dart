@@ -438,11 +438,17 @@ class RestaurantDetailPage extends StatelessWidget {
                                         children: [
                                           Row(
                                             children: [
-                                              Text(
-                                                username,
-                                                style: GoogleFonts.poppins(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
+                                              Container(
+                                                width: 250,
+                                                child: Text(
+                                                  username,
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                               ),
                                               SizedBox(width: 8),

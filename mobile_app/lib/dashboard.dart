@@ -5,11 +5,14 @@ import 'search_page.dart';
 import 'tambahulasan.dart';
 import 'model/restaurant_model.dart';
 import 'package:mobile_app/services/restaurant_services.dart';
+import 'notifikasi.dart';
+import 'package:mobile_app/services/profile_service.dart';
 
 class DashboardPage extends StatelessWidget {
   DashboardPage({super.key});
 
   final RestaurantService _restaurantService = RestaurantService();
+  final ProfileService _profileService = ProfileService();
 
   @override
   Widget build(BuildContext context) {
@@ -41,18 +44,24 @@ class DashboardPage extends StatelessWidget {
                         return Center(
                           child: Text(
                             'Error fetching restaurants: ${snapshot.error}',
-                            style: GoogleFonts.poppins(fontSize: 14, color: Colors.red),
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: Colors.red,
+                            ),
                           ),
                         );
                       }
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('No restaurants found'));
+                        return const Center(
+                          child: Text('No restaurants found'),
+                        );
                       }
                       final restaurants = snapshot.data!;
                       return Column(
-                        children: restaurants.map((restaurant) {
-                          return _buildRestaurantCard(restaurant, context);
-                        }).toList(),
+                        children:
+                            restaurants.map((restaurant) {
+                              return _buildRestaurantCard(restaurant, context);
+                            }).toList(),
                       );
                     },
                   ),
@@ -136,10 +145,20 @@ class DashboardPage extends StatelessWidget {
                         Stack(
                           alignment: Alignment.centerRight,
                           children: [
-                            Image.asset(
-                              "assets/logo_notifikasi.png",
-                              width: 50,
-                              height: 50,
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => NotificationPage(),
+                                  ),
+                                );
+                              },
+                              child: Image.asset(
+                                "assets/logo_notifikasi.png",
+                                width: 50,
+                                height: 50,
+                              ),
                             ),
                             Positioned(
                               right: 0,
@@ -168,13 +187,50 @@ class DashboardPage extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Hi, Nabilah",
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                        FutureBuilder<String>(
+                          future: _profileService.getName(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Text(
+                                "Hi, ${snapshot.data}",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              );
+                            } else if (snapshot.hasError) {
+                              return Text(
+                                "Hi, Error",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              );
+                            } else {
+                              String name = snapshot.data ?? "User";
+                              String truncatedName =
+                                  name.length > 150
+                                      ? name.substring(0, 150) + "..."
+                                      : name;
+                              return Text(
+                                "Hi, $truncatedName",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              );
+                            }
+                          },
                         ),
                         Text(
                           "Selamat datang di MakanGo!",
@@ -197,9 +253,7 @@ class DashboardPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SearchPage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => SearchPage()),
                   );
                 },
                 child: Container(
@@ -258,10 +312,10 @@ class DashboardPage extends StatelessWidget {
           _buildCategoryItem("assets/kategori_terdekat.png", "Terdekat"),
           _buildCategoryItem("assets/kategori_nusantara.png", "Nusantara"),
           _buildCategoryItem("assets/kategori_bakmie.png", "Bakmie"),
-          _buildCategoryItem("assets/kategori_japanese.png", "Japanese"),
-          _buildCategoryItem("assets/kategori_chinese.png", "Chinese"),
+          _buildCategoryItem("assets/kategori_japanese.png", "Jepang"),
+          _buildCategoryItem("assets/kategori_chinese.png", "Cina"),
           _buildCategoryItem("assets/kategori_cepatsaji.png", "Cepat Saji"),
-          _buildCategoryItem("assets/kategori_sweets.png", "Sweets"),
+          _buildCategoryItem("assets/kategori_sweets.png", "Penutup Manis"),
           _buildCategoryItem("assets/kategori_sarapan.png", "Sarapan"),
           _buildCategoryItem("assets/kategori_minuman.png", "Minuman"),
           _buildCategoryItem("assets/kategori_seafoods.png", "Seafood"),
@@ -393,7 +447,9 @@ class DashboardPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => TambahUlasanPage(restaurant: restaurant),
+                              builder:
+                                  (context) =>
+                                      TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
                         },

@@ -116,7 +116,7 @@ class IntroScreen extends StatelessWidget {
             ),
           ),
           titleWidget: Text(
-            "Review-mu Membuat Perubahan!",
+            "Ulasanmu Membuat Perubahan!",
             style: GoogleFonts.poppins(
               textStyle: const TextStyle(
                 fontSize: 24,
