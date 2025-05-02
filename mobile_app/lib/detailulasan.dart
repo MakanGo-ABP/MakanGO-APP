@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:video_player/video_player.dart';
-import 'package:intl/intl.dart'; // Untuk format tanggal
+import 'package:intl/intl.dart';
+import 'package:mobile_app/services/auth.services.dart';
+import 'package:mobile_app/services/ulasan_services.dart';
 
 class DetailUlasanPage extends StatefulWidget {
   final String reviewId;
@@ -15,6 +17,8 @@ class DetailUlasanPage extends StatefulWidget {
 
 class _DetailUlasanPageState extends State<DetailUlasanPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AuthService _authService = AuthService();
+  final UlasanServices _ulasanServices = UlasanServices();
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
 
@@ -41,8 +45,8 @@ class _DetailUlasanPageState extends State<DetailUlasanPage> {
           style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
-      body: FutureBuilder<DocumentSnapshot>(
-        future: _firestore.collection('Review').doc(widget.reviewId).get(),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: _firestore.collection('Review').doc(widget.reviewId).snapshots(),
         builder: (context, reviewSnapshot) {
           if (reviewSnapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -115,7 +119,7 @@ class _DetailUlasanPageState extends State<DetailUlasanPage> {
               final avatarUrl =
                   userData['avatarUrl'] as String? ?? 'assets/ex_profile.png';
               final userLevel = userData['level'] as int? ?? 1;
-              final userReviews = userData['reviewCount'] as int? ?? 0;
+              final userReviews = userData['jumlah_review'] as int? ?? 0;
               final userSavedPlaces = userData['savedPlacesCount'] as int? ?? 0;
 
               return FutureBuilder<DocumentSnapshot>(
@@ -280,18 +284,72 @@ class _DetailUlasanPageState extends State<DetailUlasanPage> {
                                         ],
                                       ),
                                       Spacer(),
-                                      Icon(
-                                        Icons.favorite,
-                                        color: Color(0xFFA80707),
-                                        size: 20,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        '$likes',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          color: Colors.grey[700],
+                                      FutureBuilder<bool>(
+                                        future: _ulasanServices.hasUserLikedReview(
+                                          reviewId: widget.reviewId,
+                                          userId: _authService.currentUser?.uid ?? '',
                                         ),
+                                        builder: (context, likeSnapshot) {
+                                          if (likeSnapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return CircularProgressIndicator();
+                                          }
+                                          if (likeSnapshot.hasError) {
+                                            return Text('Error');
+                                          }
+
+                                          final isLiked = likeSnapshot.data ?? false;
+
+                                          return Row(
+                                            children: [
+                                              IconButton(
+                                                icon: Icon(
+                                                  isLiked
+                                                      ? Icons.favorite
+                                                      : Icons.favorite_border,
+                                                  color: Color(0xFFA80707),
+                                                  size: 20,
+                                                ),
+                                                onPressed: () async {
+                                                  final user = _authService.currentUser;
+                                                  if (user == null) {
+                                                    ScaffoldMessenger.of(context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                            'Silakan login untuk menyukai ulasan'),
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
+                                                  try {
+                                                    await _ulasanServices
+                                                        .toggleLikeReview(
+                                                      reviewId: widget.reviewId,
+                                                      userId: user.uid,
+                                                    );
+                                                  } catch (e) {
+                                                    ScaffoldMessenger.of(context)
+                                                        .showSnackBar(
+                                                      SnackBar(
+                                                        content: Text(
+                                                            'Error: ${e.toString()}'),
+                                                      ),
+                                                    );
+                                                  }
+                                                },
+                                              ),
+                                              SizedBox(width: 4),
+                                              Text(
+                                                '$likes',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 14,
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
                                       ),
                                     ],
                                   ),
@@ -561,8 +619,6 @@ class _DetailUlasanPageState extends State<DetailUlasanPage> {
                                     SizedBox(height: 16),
                                   ],
                                   // Info Restoran
-                                  // Divider(),
-                                  // Info Restoran (Diperbarui sesuai gambar)
                                   Padding(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 5.0,

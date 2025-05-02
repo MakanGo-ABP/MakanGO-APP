@@ -2,11 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'detailulasan.dart';
+import 'package:mobile_app/services/auth.services.dart';
+import 'package:mobile_app/services/ulasan_services.dart';
 
 class UlasanPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final AuthService _authService = AuthService();
+  final UlasanServices _ulasanServices = UlasanServices();
 
   UlasanPage({super.key});
+
+  // Helper function to format likes count (e.g., 1000 -> "1K")
+  String formatLikes(int likes) {
+    if (likes >= 1000) {
+      return '${(likes / 1000).toStringAsFixed(1)}K';
+    }
+    return '$likes';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,11 +83,10 @@ class UlasanPage extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream:
-            _firestore
-                .collection('Review')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
+        stream: _firestore
+            .collection('Review')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -107,6 +118,7 @@ class UlasanPage extends StatelessWidget {
                 final photoUrls = review['photoUrls'] as List<dynamic>? ?? [];
                 final description = review['description'] as String? ?? '';
                 final userId = review['userId'] as String;
+                final likes = review['likes'] as int? ?? 0;
 
                 return FutureBuilder<DocumentSnapshot>(
                   future: _firestore.collection('User').doc(userId).get(),
@@ -134,16 +146,15 @@ class UlasanPage extends StatelessWidget {
                     final username = userData['name'] as String? ?? 'Unknown';
                     final avatarUrl =
                         userData['avatarUrl'] as String? ??
-                        'assets/ex_profile.png';
+                            'assets/ex_profile.png';
 
                     return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    DetailUlasanPage(reviewId: reviewId),
+                            builder: (context) =>
+                                DetailUlasanPage(reviewId: reviewId),
                           ),
                         );
                       },
@@ -160,28 +171,26 @@ class UlasanPage extends StatelessWidget {
                               borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(16),
                               ),
-                              child:
-                                  photoUrls.isNotEmpty
-                                      ? Image.network(
-                                        photoUrls[0],
-                                        height: 180,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                Image.asset(
-                                                  'assets/sample_food.png',
-                                                  height: 180,
-                                                  width: double.infinity,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                      )
-                                      : Image.asset(
+                              child: photoUrls.isNotEmpty
+                                  ? Image.network(
+                                      photoUrls[0],
+                                      height: 180,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          Image.asset(
                                         'assets/sample_food.png',
                                         height: 180,
                                         width: double.infinity,
                                         fit: BoxFit.cover,
                                       ),
+                                    )
+                                  : Image.asset(
+                                      'assets/sample_food.png',
+                                      height: 180,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -208,8 +217,7 @@ class UlasanPage extends StatelessWidget {
                                         radius: 12,
                                       ),
                                       SizedBox(width: 8),
-                                      Container(
-                                        width: 90,
+                                      Expanded(
                                         child: Text(
                                           username,
                                           style: GoogleFonts.poppins(
@@ -220,18 +228,86 @@ class UlasanPage extends StatelessWidget {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
-                                      Spacer(),
-                                      Icon(
-                                        Icons.favorite_border,
-                                        size: 16,
-                                        color: Colors.grey,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        '0', // Replace with actual likes count if implemented
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          color: Colors.grey,
+                                      SizedBox(width: 8),
+                                      Container(
+                                        constraints:
+                                            BoxConstraints(minWidth: 40),
+                                        child: FutureBuilder<bool>(
+                                          future: _ulasanServices
+                                              .hasUserLikedReview(
+                                            reviewId: reviewId,
+                                            userId: _authService.currentUser?.uid ??
+                                                '',
+                                          ),
+                                          builder: (context, likeSnapshot) {
+                                            if (likeSnapshot.connectionState ==
+                                                ConnectionState.waiting) {
+                                              return CircularProgressIndicator();
+                                            }
+                                            if (likeSnapshot.hasError) {
+                                              return Text('Error');
+                                            }
+
+                                            final isLiked =
+                                                likeSnapshot.data ?? false;
+
+                                            return Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: BoxConstraints(),
+                                                  icon: Icon(
+                                                    isLiked
+                                                        ? Icons.favorite
+                                                        : Icons.favorite_border,
+                                                    size: 16,
+                                                    color: isLiked
+                                                        ? Color(0xFFA80707)
+                                                        : Colors.grey,
+                                                  ),
+                                                  onPressed: () async {
+                                                    final user =
+                                                        _authService.currentUser;
+                                                    if (user == null) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Silakan login untuk menyukai ulasan'),
+                                                        ),
+                                                      );
+                                                      return;
+                                                    }
+                                                    try {
+                                                      await _ulasanServices
+                                                          .toggleLikeReview(
+                                                        reviewId: reviewId,
+                                                        userId: user.uid,
+                                                      );
+                                                    } catch (e) {
+                                                      ScaffoldMessenger.of(
+                                                              context)
+                                                          .showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                              'Error: ${e.toString()}'),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                ),
+                                                Text(
+                                                  formatLikes(likes),
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 11,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          },
                                         ),
                                       ),
                                     ],

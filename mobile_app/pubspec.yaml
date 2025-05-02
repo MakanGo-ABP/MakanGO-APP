@@ -81,6 +81,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
+    - C:\Users\mhamd\Documents\Programming\MakanGO-APP\mobile_app\assets\seisapi.png
     - assets/logo.png
     - assets/bglogin.png
     - assets/google_logo.png

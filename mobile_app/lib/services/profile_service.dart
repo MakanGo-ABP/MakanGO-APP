@@ -8,7 +8,7 @@ class ProfileService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Fungsi untuk menginisialisasi data pengguna baru
+  // Initialize new user data
   Future<void> initializeUserData() async {
     try {
       User? user = _auth.currentUser;
@@ -16,13 +16,11 @@ class ProfileService {
         throw Exception('Pengguna tidak terautentikasi.');
       }
 
-      DocumentReference userDocRef = _firestore
-          .collection('User')
-          .doc(user.uid);
+      DocumentReference userDocRef = _firestore.collection('User').doc(user.uid);
       DocumentSnapshot userDoc = await userDocRef.get();
 
       if (!userDoc.exists) {
-        // Jika dokumen pengguna belum ada, buat data awal
+        // Create initial user data if document doesn't exist
         await userDocRef.set({
           'name': user.displayName ?? 'Pengguna Baru',
           'username': '',
@@ -32,15 +30,35 @@ class ProfileService {
           'avatarUrl': 'assets/ex_profile.png',
           'xp': 0,
           'level': 1,
+          'jumlah_review': 0, // Add review count
           'createdAt': FieldValue.serverTimestamp(),
         });
+        print('Initialized new user ${user.uid}: xp=0, level=1, jumlah_review=0');
+      } else {
+        // Ensure existing users have xp, level, and jumlah_review
+        Map<String, dynamic> updates = {};
+        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+        if (!data.containsKey('xp')) {
+          updates['xp'] = 0;
+        }
+        if (!data.containsKey('level')) {
+          updates['level'] = 1;
+        }
+        if (!data.containsKey('jumlah_review')) {
+          updates['jumlah_review'] = 0;
+        }
+        if (updates.isNotEmpty) {
+          await userDocRef.update(updates);
+          print('Updated existing user ${user.uid} with missing fields: $updates');
+        }
       }
     } catch (e) {
+      print('Error initializing user data: $e');
       throw Exception('Gagal menginisialisasi data pengguna: $e');
     }
   }
 
-  // Fungsi untuk mengambil data pengguna dari Firestore
+  // Load user data from Firestore
   Future<Map<String, dynamic>> loadUserData() async {
     try {
       User? user = _auth.currentUser;
@@ -54,6 +72,7 @@ class ProfileService {
           'avatarUrl': 'assets/ex_profile.png',
           'xp': 0,
           'level': 1,
+          'jumlah_review': 0,
         };
       }
 
@@ -73,9 +92,10 @@ class ProfileService {
           'avatarUrl': userData['avatarUrl'] ?? 'assets/ex_profile.png',
           'xp': userData['xp'] ?? 0,
           'level': userData['level'] ?? 1,
+          'jumlah_review': userData['jumlah_review'] ?? 0,
         };
       } else {
-        // Jika dokumen tidak ada, inisialisasi data pengguna baru
+        // Initialize new user data if document doesn't exist
         await initializeUserData();
         return {
           'name': 'Pengguna Baru',
@@ -86,14 +106,16 @@ class ProfileService {
           'avatarUrl': 'assets/ex_profile.png',
           'xp': 0,
           'level': 1,
+          'jumlah_review': 0,
         };
       }
     } catch (e) {
+      print('Error loading user data: $e');
       throw Exception('Gagal memuat data pengguna: $e');
     }
   }
 
-  // Fungsi untuk menyimpan perubahan data pengguna ke Firestore
+  // Update user data in Firestore
   Future<void> updateUserData({
     String? name,
     String? username,
@@ -102,6 +124,7 @@ class ProfileService {
     String? avatarUrl,
     int? xp,
     int? level,
+    int? jumlahReview,
   }) async {
     try {
       User? user = _auth.currentUser;
@@ -120,16 +143,19 @@ class ProfileService {
       if (avatarUrl != null) updatedData['avatarUrl'] = avatarUrl;
       if (xp != null) updatedData['xp'] = xp;
       if (level != null) updatedData['level'] = level;
+      if (jumlahReview != null) updatedData['jumlah_review'] = jumlahReview;
 
       if (updatedData.isNotEmpty) {
         await _firestore.collection('User').doc(user.uid).update(updatedData);
+        print('Updated user data for ${user.uid}: $updatedData');
       }
     } catch (e) {
+      print('Error updating user data: $e');
       throw Exception('Gagal menyimpan perubahan: $e');
     }
   }
 
-  // Fungsi untuk mengambil nama pengguna
+  // Get user's name
   Future<String> getName() async {
     try {
       User? user = _auth.currentUser;
@@ -146,11 +172,12 @@ class ProfileService {
         return 'Nama Tidak Ditemukan';
       }
     } catch (e) {
+      print('Error getting user name: $e');
       throw Exception('Gagal mengambil nama pengguna: $e');
     }
   }
 
-  // Fungsi untuk mengunggah foto profil ke Firebase Storage dan memperbarui URL di Firestore
+  // Upload profile picture to Firebase Storage and update URL in Firestore
   Future<String> uploadProfilePicture(File imageFile) async {
     try {
       User? user = _auth.currentUser;
@@ -158,73 +185,84 @@ class ProfileService {
         throw Exception('Pengguna tidak terautentikasi.');
       }
 
-      final storageRef = _storage.ref().child(
-        'profile_pictures/${user.uid}.jpg',
-      );
+      final storageRef =
+          _storage.ref().child('profile_pictures/${user.uid}.jpg');
       await storageRef.putFile(imageFile);
       final downloadUrl = await storageRef.getDownloadURL();
       await updateUserData(avatarUrl: downloadUrl);
+      print('Uploaded profile picture for ${user.uid}: $downloadUrl');
       return downloadUrl;
     } catch (e) {
+      print('Error uploading profile picture: $e');
       throw Exception('Gagal mengunggah foto profil: $e');
     }
   }
 
-  // Fungsi untuk menambahkan ulasan dan menghitung XP
-  Future<void> addReview({
-    required String restaurantName,
-    required String category,
-    required String time,
-    required String address,
-    required String comment,
-    required bool hasImage,
+  // Update XP and level after an action (review or like)
+  Future<void> updateUserXP({
+    required String userId,
+    required int xpToAdd,
   }) async {
     try {
-      User? user = _auth.currentUser;
-      if (user == null) {
-        throw Exception('Pengguna tidak terautentikasi.');
+      DocumentReference userRef = _firestore.collection('User').doc(userId);
+      await _firestore.runTransaction((transaction) async {
+        DocumentSnapshot userDoc = await transaction.get(userRef);
+        if (!userDoc.exists) {
+          throw Exception('Pengguna tidak ditemukan.');
+        }
+
+        Map<String, dynamic> data = userDoc.data() as Map<String, dynamic>;
+        int currentXP = (data['xp'] as int?) ?? 0;
+        int newXP = currentXP + xpToAdd;
+        if (newXP < 0) newXP = 0; // Prevent negative XP
+
+        // Calculate new level
+        int newLevel;
+        if (newXP <= 50) {
+          newLevel = 1; // Bronze
+        } else if (newXP <= 100) {
+          newLevel = 2; // Silver
+        } else {
+          newLevel = 3; // Gold
+        }
+
+        // Update XP and level
+        transaction.update(userRef, {
+          'xp': newXP,
+          'level': newLevel,
+        });
+        print('Updated XP for user $userId: newXP=$newXP, newLevel=$newLevel');
+      });
+
+      // Notify on level-up
+      DocumentSnapshot updatedDoc = await userRef.get();
+      Map<String, dynamic> updatedData = updatedDoc.data() as Map<String, dynamic>;
+      int newLevel = updatedData['level'] ?? 1;
+      int newXP = updatedData['xp'] ?? 0;
+      if (newXP > 50 && newLevel == 2) {
+        await userRef.collection('Notifications').add({
+          'type': 'level_up',
+          'message': 'Selamat! Kamu naik ke Level Silver!',
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+        print('Created level-up notification for user $userId: Level Silver');
+      } else if (newXP > 100 && newLevel == 3) {
+        await userRef.collection('Notifications').add({
+          'type': 'level_up',
+          'message': 'Selamat! Kamu naik ke Level Gold!',
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+        print('Created level-up notification for user $userId: Level Gold');
       }
-
-      // Tambahkan ulasan ke subkoleksi Reviews
-      await _firestore
-          .collection('User')
-          .doc(user.uid)
-          .collection('Reviews')
-          .add({
-            'restaurantName': restaurantName,
-            'category': category,
-            'time': time,
-            'address': address,
-            'comment': comment,
-            'hasImage': hasImage,
-            'timestamp': FieldValue.serverTimestamp(),
-          });
-
-      // Hitung XP baru
-      int xpToAdd = hasImage ? 10 : 5;
-      DocumentSnapshot userDoc =
-          await _firestore.collection('User').doc(user.uid).get();
-      int currentXp = (userDoc.data() as Map<String, dynamic>)['xp'] ?? 0;
-      int newXp = currentXp + xpToAdd;
-
-      // Hitung level baru
-      int newLevel;
-      if (newXp < 50) {
-        newLevel = 1; // Bronze
-      } else if (newXp < 100) {
-        newLevel = 2; // Silver
-      } else {
-        newLevel = 3; // Gold
-      }
-
-      // Perbarui XP dan level di Firestore
-      await updateUserData(xp: newXp, level: newLevel);
     } catch (e) {
-      throw Exception('Gagal menambahkan ulasan: $e');
+      print('Error updating user XP: $e');
+      throw Exception('Gagal memperbarui XP pengguna: $e');
     }
   }
 
-  // Fungsi untuk mengambil riwayat ulasan
+  // Fetch user reviews from Review collection
   Future<List<Map<String, dynamic>>> getReviews() async {
     try {
       User? user = _auth.currentUser;
@@ -232,26 +270,35 @@ class ProfileService {
         return [];
       }
 
-      QuerySnapshot reviewsSnapshot =
-          await _firestore
-              .collection('User')
-              .doc(user.uid)
-              .collection('Reviews')
-              .orderBy('timestamp', descending: true)
-              .get();
+      QuerySnapshot reviewsSnapshot = await _firestore
+          .collection('Review')
+          .where('userId', isEqualTo: user.uid)
+          .orderBy('createdAt', descending: true)
+          .get();
 
-      return reviewsSnapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return {
-          'restaurantName': data['restaurantName'] ?? '',
-          'category': data['category'] ?? '',
-          'time': data['time'] ?? '',
-          'address': data['address'] ?? '',
-          'comment': data['comment'] ?? '',
-          'hasImage': data['hasImage'] ?? false,
-        };
-      }).toList();
+      List<Map<String, dynamic>> reviews = [];
+      for (var doc in reviewsSnapshot.docs) {
+        final reviewData = doc.data() as Map<String, dynamic>;
+        DocumentSnapshot restaurantDoc = await _firestore
+            .collection('Restaurant')
+            .doc(reviewData['restaurantId'])
+            .get();
+        if (restaurantDoc.exists) {
+          final restaurantData = restaurantDoc.data() as Map<String, dynamic>;
+          reviews.add({
+            'restaurantName': restaurantData['name'] ?? 'Unknown',
+            'category': restaurantData['category'] ?? 'Unknown',
+            'time': (reviewData['createdAt'] as Timestamp?)?.toDate().toString() ??
+                'Unknown',
+            'address': restaurantData['address'] ?? 'Unknown',
+            'comment': reviewData['description'] ?? '',
+          });
+        }
+      }
+      print('Fetched ${reviews.length} reviews for user ${user.uid}');
+      return reviews;
     } catch (e) {
+      print('Error fetching reviews: $e');
       throw Exception('Gagal memuat riwayat ulasan: $e');
     }
   }

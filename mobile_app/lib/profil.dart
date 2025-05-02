@@ -9,6 +9,7 @@ import 'package:mobile_app/model/place_list_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_app/services/auth.services.dart';
 import 'package:mobile_app/model/restaurant_model.dart';
+import 'package:mobile_app/services/ulasan_services.dart';
 
 class ProfilPage extends StatefulWidget {
   const ProfilPage({super.key});
@@ -25,6 +26,7 @@ class _ProfilPageState extends State<ProfilPage> {
   final ProfileService _profileService = ProfileService();
   final PlaceListService _placeListService = PlaceListService();
   final AuthService _authService = AuthService();
+  final UlasanServices _ulasanServices = UlasanServices();
   bool _isLoading = true;
 
   @override
@@ -41,43 +43,104 @@ class _ProfilPageState extends State<ProfilPage> {
       final userData = await _profileService.loadUserData();
       setState(() {
         _userData = userData;
-        _name = userData['name']!;
-        _username = userData['username']!;
+        _name = userData['name'] ?? '';
+        _username = userData['username'] != null && userData['username'].isNotEmpty
+            ? '@${userData['username']}'
+            : '@username';
         _isLoading = false;
       });
+      print('ProfilPage loaded user data: xp=${userData['xp']}, level=${userData['level']}');
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      print('Error loading user data: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat data pengguna: $e')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    final user = _authService.currentUser;
+    if (user == null) {
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(
-          child: CircularProgressIndicator(color: Color(0xFFA80707)),
+          child: Text(
+            'Silakan login untuk melihat profil Anda',
+            style: GoogleFonts.poppins(),
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          _buildProfileHeader(),
-          const SizedBox(height: 10),
-          _buildXPBar(),
-          const SizedBox(height: 10),
-          _buildTabs(),
-          Expanded(
-            child: isReviewTabActive ? _buildReviewList() : _buildPlaceList(),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('User').doc(user.uid).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting || _isLoading) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: CircularProgressIndicator(color: Color(0xFFA80707)),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          print('ProfilPage StreamBuilder error: ${snapshot.error}');
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Text(
+                'Gagal memuat data: ${snapshot.error}',
+                style: GoogleFonts.poppins(),
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          print('No user data found for UID: ${user.uid}, initializing...');
+          _profileService.initializeUserData(); // Ensure user data is initialized
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(
+              child: Text(
+                'Menginisialisasi data pengguna...',
+                style: GoogleFonts.poppins(),
+              ),
+            ),
+          );
+        }
+
+        _userData = snapshot.data!.data() as Map<String, dynamic>;
+        _userData['xp'] = (_userData['xp'] as int?) ?? 0; // Fallback for missing xp
+        _userData['level'] = (_userData['level'] as int?) ?? 1; // Fallback for missing level
+        _userData['jumlah_review'] = (_userData['jumlah_review'] as int?) ?? 0; // Fallback for jumlah_review
+        _name = _userData['name'] ?? 'Nama Tidak Ditemukan';
+        _username = _userData['username'] != null && _userData['username'].isNotEmpty
+            ? '@${_userData['username']}'
+            : '@username';
+        print('ProfilPage StreamBuilder updated: xp=${_userData['xp']}, level=${_userData['level']}, jumlah_review=${_userData['jumlah_review']}');
+
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              _buildProfileHeader(),
+              const SizedBox(height: 10),
+              _buildXPBar(),
+              const SizedBox(height: 10),
+              _buildTabs(),
+              Expanded(
+                child: isReviewTabActive ? _buildReviewList() : _buildPlaceList(),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -180,40 +243,32 @@ class _ProfilPageState extends State<ProfilPage> {
   }
 
   Widget _buildXPBar() {
-    int xp = _userData['xp'] ?? 0;
-    int level = _userData['level'] ?? 1;
+    int xp = _userData['xp'] as int;
+    int level = _userData['level'] as int;
     String levelName;
     String levelIcon;
     int xpForNextLevel;
     double progress;
 
-    if (xp == 0) {
-      progress = 0.0;
-    } else {
-      if (level == 1) {
-        xpForNextLevel = 50;
-        progress = xp / 50.0;
-      } else if (level == 2) {
-        xpForNextLevel = 100;
-        progress = (xp - 50) / 50.0;
-      } else {
-        xpForNextLevel = xp;
-        progress = 1.0;
-      }
-    }
-
-    if (level == 1) {
+    // Calculate level and progress
+    if (xp <= 50) {
+      level = 1;
       levelName = "Bronze";
       levelIcon = "assets/logo_bronze.png";
       xpForNextLevel = 50;
-    } else if (level == 2) {
+      progress = xp / 50.0;
+    } else if (xp <= 100) {
+      level = 2;
       levelName = "Silver";
       levelIcon = "assets/logo_silver.png";
       xpForNextLevel = 100;
+      progress = (xp - 50) / 50.0;
     } else {
+      level = 3;
       levelName = "Gold";
       levelIcon = "assets/logo_gold.png";
-      xpForNextLevel = xp;
+      xpForNextLevel = xp; // No next level
+      progress = 1.0;
     }
 
     return Container(
@@ -259,9 +314,7 @@ class _ProfilPageState extends State<ProfilPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => LevelPage()),
-                  ).then((value) {
-                    _loadUserData();
-                  });
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -384,7 +437,7 @@ class _ProfilPageState extends State<ProfilPage> {
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('Reviews')
+          .collection('Review')
           .where('userId', isEqualTo: user.uid)
           .snapshots(),
       builder: (context, snapshot) {
@@ -395,6 +448,7 @@ class _ProfilPageState extends State<ProfilPage> {
         }
 
         if (snapshot.hasError) {
+          print('Review StreamBuilder error: ${snapshot.error}');
           return Center(
             child: Text(
               'Gagal memuat ulasan: ${snapshot.error}',
@@ -449,6 +503,9 @@ class _ProfilPageState extends State<ProfilPage> {
                   itemCount: reviews.length,
                   itemBuilder: (context, index) {
                     final review = reviews[index];
+                    final reviewId = review.id;
+                    final reviewData = review.data() as Map<String, dynamic>;
+
                     return FutureBuilder<DocumentSnapshot>(
                       future: FirebaseFirestore.instance
                           .collection('Restaurant')
@@ -507,12 +564,40 @@ class _ProfilPageState extends State<ProfilPage> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            restaurant.name,
-                                            style: GoogleFonts.poppins(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15,
-                                            ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  restaurant.name,
+                                                  style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                  size: 20,
+                                                ),
+                                                onPressed: () {
+                                                  _confirmDeleteReview(
+                                                    context,
+                                                    reviewId,
+                                                    user.uid,
+                                                    review['restaurantId'],
+                                                    reviewData['photoUrls'] as List<dynamic>?,
+                                                    reviewData['videoUrl'] as String?,
+                                                  );
+                                                },
+                                              ),
+                                            ],
                                           ),
                                           const SizedBox(height: 5),
                                           Row(
@@ -552,9 +637,16 @@ class _ProfilPageState extends State<ProfilPage> {
                                                 ),
                                               ),
                                               const SizedBox(width: 5),
-                                              Text(
-                                                _name,
-                                                style: GoogleFonts.poppins(),
+                                              Expanded(
+                                                child: Text(
+                                                  _name,
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 12,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
                                               ),
                                             ],
                                           ),
@@ -579,6 +671,92 @@ class _ProfilPageState extends State<ProfilPage> {
     );
   }
 
+  Future<void> _confirmDeleteReview(
+    BuildContext context,
+    String reviewId,
+    String userId,
+    String restaurantId,
+    List<dynamic>? photoUrls,
+    String? videoUrl,
+  ) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            'Hapus Ulasan',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'Apakah Anda yakin ingin menghapus ulasan ini? Tindakan ini tidak dapat dibatalkan.',
+            style: GoogleFonts.poppins(),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Batal',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Hapus',
+                style: GoogleFonts.poppins(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () async {
+                try {
+                  await _ulasanServices.deleteReview(
+                    reviewId: reviewId,
+                    userId: userId,
+                    restaurantId: restaurantId,
+                    photoUrls: photoUrls?.cast<String>(),
+                    videoUrl: videoUrl,
+                  );
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Ulasan berhasil dihapus',
+                        style: GoogleFonts.poppins(),
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop();
+                  print('Error deleting review: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Gagal menghapus ulasan: $e',
+                        style: GoogleFonts.poppins(),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildPlaceList() {
     return StreamBuilder<List<PlaceList>>(
       stream: _placeListService.getPlaceLists(),
@@ -590,6 +768,7 @@ class _ProfilPageState extends State<ProfilPage> {
         }
 
         if (snapshot.hasError) {
+          print('PlaceList StreamBuilder error: ${snapshot.error}');
           return Center(
             child: Text(
               'Gagal memuat daftar tempat: ${snapshot.error}',
@@ -707,6 +886,8 @@ class _ProfilPageState extends State<ProfilPage> {
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,
                                         ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                       const SizedBox(height: 5),
                                       Row(
@@ -719,9 +900,15 @@ class _ProfilPageState extends State<ProfilPage> {
                                             ),
                                           ),
                                           const SizedBox(width: 5),
-                                          Text(
-                                            _name,
-                                            style: GoogleFonts.poppins(),
+                                          Expanded(
+                                            child: Text(
+                                              _name,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
                                         ],
                                       ),

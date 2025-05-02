@@ -101,7 +101,7 @@ class _UbahProfilPageState extends State<UbahProfilPage> {
                 // TODO: Tambahkan fungsi untuk mengubah foto profil
               },
               child: Text(
-                'Ubah Foto Profil',
+                'Foto Profil',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: Color(0xFFA80707),

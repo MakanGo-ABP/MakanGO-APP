@@ -7,12 +7,22 @@ import 'model/restaurant_model.dart';
 import 'package:mobile_app/services/restaurant_services.dart';
 import 'notifikasi.dart';
 import 'package:mobile_app/services/profile_service.dart';
+import 'package:mobile_app/services/restaurant_match.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobile_app/services/auth.services.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   DashboardPage({super.key});
 
+  @override
+  _DashboardPageState createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
   final RestaurantService _restaurantService = RestaurantService();
   final ProfileService _profileService = ProfileService();
+  final AuthService _authService = AuthService();
+  String? _selectedCategory; // Track the selected category
 
   @override
   Widget build(BuildContext context) {
@@ -32,45 +42,83 @@ class DashboardPage extends StatelessWidget {
                   const SizedBox(height: 10),
                   _buildCategoryGrid(),
                   const SizedBox(height: 20),
-                  _buildSectionTitle("Tempat Populer Terdekat"),
+                  _buildSectionTitle("Tempat Populer"),
                   const SizedBox(height: 10),
-                  StreamBuilder<List<Restaurant>>(
-                    stream: _restaurantService.getRestaurants(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Text(
-                            'Error fetching restaurants: ${snapshot.error}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.red,
-                            ),
-                          ),
-                        );
-                      }
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(
-                          child: Text('No restaurants found'),
-                        );
-                      }
-                      final restaurants = snapshot.data!;
-                      return Column(
-                        children:
-                            restaurants.map((restaurant) {
-                              return _buildRestaurantCard(restaurant, context);
-                            }).toList(),
-                      );
-                    },
-                  ),
+                  _selectedCategory == null
+                      ? _buildAllRestaurants()
+                      : _buildFilteredRestaurants(_selectedCategory!),
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAllRestaurants() {
+    return StreamBuilder<List<Restaurant>>(
+      stream: _restaurantService.getRestaurants(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error fetching restaurants: ${snapshot.error}',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.red,
+              ),
+            ),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No restaurants found'),
+          );
+        }
+        final restaurants = snapshot.data!;
+        return Column(
+          children: restaurants.map((restaurant) {
+            return _buildRestaurantCard(restaurant, context);
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildFilteredRestaurants(String category) {
+    return StreamBuilder<List<RestaurantMatch>>(
+      stream: _restaurantService.searchRestaurants(category),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error searching restaurants: ${snapshot.error}',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.red,
+              ),
+            ),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text('No restaurants match the selected category'),
+          );
+        }
+        final restaurantMatches = snapshot.data!;
+        return Column(
+          children: restaurantMatches.map((match) {
+            return _buildRestaurantCard(match.restaurant, context);
+          }).toList(),
+        );
+      },
     );
   }
 
@@ -142,44 +190,61 @@ class DashboardPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        Stack(
-                          alignment: Alignment.centerRight,
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => NotificationPage(),
-                                  ),
-                                );
-                              },
-                              child: Image.asset(
-                                "assets/logo_notifikasi.png",
-                                width: 50,
-                                height: 50,
-                              ),
-                            ),
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(5),
-                                decoration: BoxDecoration(
-                                  color: Color(0xFFFFAA00),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  "2",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                        StreamBuilder<QuerySnapshot>(
+                          stream: _authService.currentUser != null
+                              ? FirebaseFirestore.instance
+                                  .collection('User')
+                                  .doc(_authService.currentUser!.uid)
+                                  .collection('Notifications')
+                                  .where('isRead', isEqualTo: false)
+                                  .snapshots()
+                              : null,
+                          builder: (context, snapshot) {
+                            int unreadCount = 0;
+                            if (snapshot.hasData) {
+                              unreadCount = snapshot.data!.docs.length;
+                            }
+                            return Stack(
+                              alignment: Alignment.centerRight,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => NotificationPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: Image.asset(
+                                    "assets/logo_notifikasi.png",
+                                    width: 50,
+                                    height: 50,
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
+                                if (unreadCount > 0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFFFFAA00),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Text(
+                                        unreadCount.toString(),
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -309,7 +374,6 @@ class DashboardPage extends StatelessWidget {
         spacing: 25,
         runSpacing: 16,
         children: [
-          _buildCategoryItem("assets/kategori_terdekat.png", "Terdekat"),
           _buildCategoryItem("assets/kategori_nusantara.png", "Nusantara"),
           _buildCategoryItem("assets/kategori_bakmie.png", "Bakmie"),
           _buildCategoryItem("assets/kategori_japanese.png", "Jepang"),
@@ -325,17 +389,39 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _buildCategoryItem(String imagePath, String title) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Image.asset(imagePath, width: 50, height: 50),
-        SizedBox(height: 8, width: 10),
-        Text(
-          title,
-          style: GoogleFonts.poppins(fontSize: 12),
-          textAlign: TextAlign.center,
-        ),
-      ],
+    bool isSelected = _selectedCategory == title;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          // Toggle category: if the same category is tapped, clear the filter
+          _selectedCategory = isSelected ? null : title;
+        });
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? Colors.red : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: Image.asset(imagePath, width: 50, height: 50),
+          ),
+          SizedBox(height: 8, width: 10),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: isSelected ? Colors.red : Colors.black,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -468,9 +554,8 @@ class DashboardPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      TambahUlasanPage(restaurant: restaurant),
+                              builder: (context) =>
+                                  TambahUlasanPage(restaurant: restaurant),
                             ),
                           );
                         },
