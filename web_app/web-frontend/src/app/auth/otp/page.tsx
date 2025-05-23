@@ -28,7 +28,7 @@ export default function OtpPage() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const enteredOtp = otp.join("");
     console.log("Verifying OTP:", enteredOtp);
@@ -63,7 +63,7 @@ export default function OtpPage() {
         {/* Make this dynamic */}
       </p>
 
-      {/* {error && <p className="text-red-500 text-sm mb-4 text-left">{error}</p>} */}
+      {error && <p className="text-red-500 text-sm mb-4 text-left">{error}</p>}
 
       <form onSubmit={handleSubmit} className="w-full space-y-6">
         <div className="flex justify-between space-x-2 sm:space-x-3 md:space-x-4">

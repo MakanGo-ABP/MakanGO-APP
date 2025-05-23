@@ -20,43 +20,82 @@ class AuthController extends Controller
     }
 
     public function register(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:6',
-            'name' => 'required|string',
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required|min:6',
+        'name' => 'required|string',
+    ]);
+
+    try {
+        $userProperties = [
+            'email' => $request->email,
+            'password' => $request->password,
+            'displayName' => $request->name,
+        ];
+        $user = $this->auth->createUser($userProperties);
+
+        $otp = random_int(100000, 999999);
+        $expiresAt = now()->addMinutes(5);
+
+        $this->firestore->database()->collection('OTPs')->document($user->uid)->set([
+            'otp' => $otp,
+            'expires_at' => $expiresAt->toDateTimeString(),
+            'email' => $request->email,
         ]);
 
-        try {
-            $userProperties = [
-                'email' => $request->email,
-                'password' => $request->password,
-                'displayName' => $request->name,
-            ];
-            $user = $this->auth->createUser($userProperties);
+        Mail::to($request->email)->send(new OtpMail($otp));
 
-            $this->firestore->database()->collection('User')->document($user->uid)->set([
-                'created_at' => now()->toDateTimeString(),
-                'email' => $request->email,
-                'jumlah_review' => 0,
-                'level' => 1,
-                'name' => $request->name,
-                'uid' => $user->uid,
-                'username' => null, 
-            ]);
-
-            return response()->json([
-                'message' => 'User registered successfully',
-                'user' => [
-                    'uid' => $user->uid,
-                    'email' => $user->email,
-                    'name' => $user->displayName,
-                ],
-            ], 201);
-        } catch (AuthException $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
-        }
+        return response()->json([
+            'message' => 'User created, OTP sent to email',
+            'uid' => $user->uid,
+        ], 201);
+    } catch (AuthException $e) {
+        return response()->json(['error' => $e->getMessage()], 400);
     }
+}
+
+public function verifyOtp(Request $request)
+{
+    $request->validate([
+        'uid' => 'required|string',
+        'otp' => 'required|string',
+    ]);
+
+    try {
+        $otpDoc = $this->firestore->database()->collection('OTPs')->document($request->uid)->snapshot();
+        if (!$otpDoc->exists()) {
+            return response()->json(['error' => 'OTP not found'], 400);
+        }
+
+        $otpData = $otpDoc->data();
+        $expiresAt = \Carbon\Carbon::parse($otpData['expires_at']);
+
+        if (now()->greaterThan($expiresAt)) {
+            return response()->json(['error' => 'OTP expired'], 400);
+        }
+
+        if ($otpData['otp'] != $request->otp) {
+            return response()->json(['error' => 'Invalid OTP'], 400);
+        }
+
+        $this->firestore->database()->collection('OTPs')->document($request->uid)->delete();
+
+        $this->firestore->database()->collection('User')->document($request->uid)->set([
+            'created_at' => now()->toDateTimeString(),
+            'email' => $otpData['email'],
+            'jumlah_review' => 0,
+            'level' => 1,
+            'name' => $request->name ?? 'Unknown',
+            'uid' => $request->uid,
+            'username' => null,
+        ]);
+
+        return response()->json(['message' => 'OTP verified, registration complete'], 200);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+}
 
     public function login(Request $request)
     {
