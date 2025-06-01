@@ -1,44 +1,46 @@
+"use client";
+
 import AuthLayout from "../../components/AuthLayout";
 import Image from "next/image";
-import { useState, useRef } from "react";
+import { useState, useRef, KeyboardEvent, FormEvent } from "react";
 
 export default function OtpPage() {
-  const [otp, setOtp] = useState(new Array(4).fill(""));
-  const [error, setError] = useState("");
-  const inputRefs = useRef([]);
+  const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
+  const [error, setError] = useState<string>("");
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleChange = (element, index) => {
-    if (isNaN(element.value)) return false;
+  const handleChange = (element: HTMLInputElement, index: number) => {
+    if (isNaN(Number(element.value))) return;
 
     setOtp([...otp.map((d, idx) => (idx === index ? element.value : d))]);
 
     if (element.value !== "" && element.nextSibling && index < otp.length - 1) {
-      inputRefs.current[index + 1].focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (element, index) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, index: number) => {
     if (
-      element.key === "Backspace" &&
+      e.key === "Backspace" &&
       otp[index] === "" &&
-      element.previousSibling &&
+      e.currentTarget.previousSibling &&
       index > 0
     ) {
-      inputRefs.current[index - 1].focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const enteredOtp = otp.join("");
     console.log("Verifying OTP:", enteredOtp);
-    // Add your OTP verification logic here
-    if (enteredOtp.length < 4) {
+
+    if (enteredOtp.length < 6) {
       setError("Kode OTP tidak lengkap.");
       return;
     }
     setError("");
-    // ... API call
+    // Add your OTP verification logic here
   };
 
   return (
@@ -67,22 +69,22 @@ export default function OtpPage() {
 
       <form onSubmit={handleSubmit} className="w-full space-y-6">
         <div className="flex justify-between space-x-2 sm:space-x-3 md:space-x-4">
-          {otp.map((data, index) => {
-            return (
-              <input
-                key={index}
-                type="text"
-                name="otp"
-                maxLength="1"
-                className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-center text-lg sm:text-xl md:text-2xl font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-gray-800"
-                value={data}
-                onChange={(e) => handleChange(e.target, index)}
-                onFocus={(e) => e.target.select()}
-                onKeyDown={(e) => handleKeyDown(e, index)}
-                ref={(el) => (inputRefs.current[index] = el)}
-              />
-            );
-          })}
+          {otp.map((data, index) => (
+            <input
+              key={index}
+              type="text"
+              name="otp"
+              maxLength={1}
+              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-center text-lg sm:text-xl md:text-2xl font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none text-gray-800"
+              value={data}
+              onChange={(e) => handleChange(e.target, index)}
+              onFocus={(e) => e.target.select()}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              ref={(el) => {
+                inputRefs.current[index] = el;
+              }}
+            />
+          ))}
         </div>
 
         <button
@@ -92,7 +94,6 @@ export default function OtpPage() {
           Lanjutkan
         </button>
       </form>
-      {/* You might want a "Kirim ulang kode" (Resend code) link here */}
       <p className="mt-6 text-center text-sm">
         <button className="text-red-600 hover:underline font-medium">
           Kirim ulang kode
