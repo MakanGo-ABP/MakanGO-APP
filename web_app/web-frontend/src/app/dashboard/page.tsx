@@ -1,24 +1,42 @@
-import MainLayout from "../components/MainLayout";
+// app/dashboard/page.tsx
+"use client";
+
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MapPin, Star, Edit3 } from "lucide-react";
-import Link from "next/link";
+import { useAuth } from "../utils/AuthContext";
+import MainLayout from "../components/MainLayout";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useEffect, useState } from "react";
+import { Restaurant } from "../interface/Restaurant";
 
-function HeroSection() {
+function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const router = useRouter();
+
+  const handleExplore = () => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      // Handle search logic for authenticated users (e.g., redirect to search results)
+      console.log("Explore clicked");
+    }
+  };
+
   return (
     <section className="relative bg-gradient-to-b from-[#B80A00] to-[#ffffff] text-white py-16 md:py-24 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid md:grid-cols-2 gap-8 items-center">
-          {/* Left Text Content */}
           <div className="text-center md:text-left">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
               Bingung Mau <br className="hidden sm:block" />
               Makan Apa?
             </h1>
             <p className="text-lg sm:text-xl text-gray-200 mb-8">
-              Lihat dulu review-nya di MakanGo! <br />
-              Temukan rasa yang cocok, dan tinggalkan jejakmu lewat ulasan.
+              {isAuthenticated
+                ? "Temukan rasa yang cocok dengan review di MakanGo!"
+                : "Masuk untuk melihat review dan menemukan kuliner terbaik!"}
             </p>
-            {/* Location Search */}
             <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg max-w-lg mx-auto md:mx-0">
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
                 <div className="relative w-full sm:flex-grow">
@@ -30,15 +48,22 @@ function HeroSection() {
                     type="text"
                     placeholder="Ketik lokasi kamu"
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    disabled={!isAuthenticated}
                   />
                 </div>
-                <button className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+                <button
+                  onClick={handleExplore}
+                  className={`w-full sm:w-auto px-6 py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                    isAuthenticated
+                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      : "bg-gray-300 text-gray-700 cursor-not-allowed"
+                  }`}
+                >
                   Jelajahi
                 </button>
               </div>
             </div>
           </div>
-          {/* Right Image Content */}
           <div className="hidden md:flex justify-center items-center">
             <Image
               src="/assets/Group8491-1.png"
@@ -55,7 +80,12 @@ function HeroSection() {
   );
 }
 
-function KulinerCategoriesSection() {
+function KulinerCategoriesSection({
+  isAuthenticated,
+}: {
+  isAuthenticated: boolean;
+}) {
+  const router = useRouter();
   const categories = [
     { name: "Terdekat", icon: "/assets/kategori_terdekat.png" },
     { name: "Nusantara", icon: "/assets/kategori_nusantara.png" },
@@ -70,6 +100,15 @@ function KulinerCategoriesSection() {
     { name: "Seafood", icon: "/assets/kategori_seafoods.png" },
     { name: "Makanan sehat", icon: "/assets/kategori_makanansehat.png" },
   ];
+
+  const handleCategoryClick = (categoryName: string) => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      router.push(`/category/${categoryName.toLowerCase()}`);
+    }
+  };
+
   return (
     <section className="py-12 md:py-16 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -78,24 +117,25 @@ function KulinerCategoriesSection() {
         </h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4 md:gap-6">
           {categories.map((category) => (
-            <Link
+            <button
               key={category.name}
-              href={`/category/${category.name.toLowerCase()}`}
-              legacyBehavior
+              onClick={() => handleCategoryClick(category.name)}
+              className={`flex flex-col items-center p-3 rounded-lg shadow-md hover:shadow-lg transition-shadow text-center ${
+                isAuthenticated ? "bg-white" : "bg-gray-200 cursor-not-allowed"
+              }`}
+              disabled={!isAuthenticated}
             >
-              <a className="flex flex-col items-center p-3 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow text-center">
-                <Image
-                  src={category.icon}
-                  alt={category.name}
-                  width={64}
-                  height={64}
-                  className="object-contain mb-2"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  {category.name}
-                </span>
-              </a>
-            </Link>
+              <Image
+                src={category.icon}
+                alt={category.name}
+                width={64}
+                height={64}
+                className="object-contain mb-2"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                {category.name}
+              </span>
+            </button>
           ))}
         </div>
       </div>
@@ -103,15 +143,66 @@ function KulinerCategoriesSection() {
   );
 }
 
-function PopularPlacesSection() {
-  const places = Array(8).fill({
-    name: "McDonald's - Podomoro Park",
-    rating: 4.8,
-    reviews: 103,
-    hours: "00:00 - 23:59",
-    category: "Cepat saji",
-    image: "/assets/restaurants/mcd.jpg",
-  });
+function PopularRestaurantSection({
+  isAuthenticated,
+}: {
+  isAuthenticated: boolean;
+}) {
+  const router = useRouter();
+
+  const [restaurants, setRestaurant] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchRestaurants() {
+      try {
+        setLoading(true);
+        const querySnapshot = await getDocs(collection(db, "Restaurant"));
+        const fetchedRestaurants = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Restaurant[];
+        setRestaurant(fetchedRestaurants);
+      } catch (err) {
+        console.error("Error fetching places:", err);
+        setError("Gagal memuat tempat populer.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRestaurants();
+  }, []);
+
+  const handleAddReview = () => {
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      router.push("/reviews/add");
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-12 md:py-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-gray-600">Memuat tempat populer...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-12 md:py-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-red-500">{error}</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 md:py-16 bg-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -119,50 +210,69 @@ function PopularPlacesSection() {
           Apa Saja Tempat Populer Terdekat?
         </h2>
         <p className="text-center text-gray-600 mb-10 md:mb-12">
-          Temukan koleksi hidangan populer, favorit lokal, dan penawaran terbaik
-          di lingkungan Anda.
+          {isAuthenticated
+            ? "Temukan koleksi hidangan populer, favorit lokal, dan penawaran terbaik di lingkungan Anda."
+            : "Masuk untuk melihat tempat populer dan menulis ulasan!"}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-          {places.map((place, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
-            >
-              <Image
-                src={place.image}
-                alt={place.name}
-                width={400}
-                height={200}
-                className="w-full h-40 object-cover"
-              />
-              <div className="p-4 flex flex-col flex-grow">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="inline-flex items-center bg-yellow-400 text-white text-xs font-semibold px-2 py-0.5 rounded">
-                    <Star size={12} className="mr-1 fill-current" />{" "}
-                    {place.rating}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {place.reviews} Reviews
-                  </span>
+          {restaurants.length === 0 ? (
+            <p className="text-center text-gray-600 col-span-full">
+              Tidak ada tempat populer ditemukan.
+            </p>
+          ) : (
+            restaurants.map((restaurant) => (
+              <div
+                key={restaurant.id}
+                className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
+              >
+                <Image
+                  src={restaurant.imagePath || "/assets/placeholder.jpg"}
+                  alt={restaurant.name}
+                  width={400}
+                  height={200}
+                  className="w-full h-40 object-cover"
+                />
+                <div className="p-4 flex flex-col flex-grow">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="inline-flex items-center bg-yellow-400 text-white text-xs font-semibold px-2 py-0.5 rounded">
+                      <Star size={12} className="mr-1 fill-current" />{" "}
+                      {restaurant.rating || "N/A"}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {restaurant.reviews || 0} Reviews
+                    </span>
+                  </div>
+                  <h3 className="text-md font-semibold text-gray-800 mb-1 truncate">
+                    {restaurant.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-1">
+                    {restaurant.time || "Tidak tersedia"}
+                  </p>
+                  <p className="text-xs text-gray-500 mb-3">
+                    {restaurant.category || "Tidak dikategorikan"}
+                  </p>
+                  <button
+                    onClick={handleAddReview}
+                    className={`mt-auto w-full px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center ${
+                      isAuthenticated
+                        ? "bg-red-100 text-red-700 hover:bg-red-200"
+                        : "bg-gray-300 text-gray-700 cursor-not-allowed"
+                    }`}
+                    disabled={!isAuthenticated}
+                  >
+                    <Edit3 size={14} className="mr-1.5" /> Tambah ulasan
+                  </button>
                 </div>
-                <h3 className="text-md font-semibold text-gray-800 mb-1 truncate">
-                  {place.name}
-                </h3>
-                <p className="text-xs text-gray-500 mb-1">{place.hours}</p>
-                <p className="text-xs text-gray-500 mb-3">{place.category}</p>
-                <button className="mt-auto w-full bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center">
-                  <Edit3 size={14} className="mr-1.5" /> Tambah ulasan
-                </button>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </section>
   );
 }
 
-function WhyMakanGoSection() {
+function WhyMakanGoSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   const features = [
     {
       title: "Menemukan Tempat Makan",
@@ -172,16 +282,20 @@ function WhyMakanGoSection() {
     },
     {
       title: "Mengulas & Dapatkan XP",
-      description:
-        "Bagikan pemikiran Anda dan dapatkan XP untuk setiap ulasan. Berbagi berarti peduli!",
+      description: isAuthenticated
+        ? "Bagikan pemikiran Anda dan dapatkan XP untuk setiap ulasan. Berbagi berarti peduli!"
+        : "Masuk untuk mengulas dan dapatkan XP!",
       icon: "/assets/fitur-2.png",
     },
     {
       title: "Naik Level, Dapatkan Keuntungan!",
-      description: "Naik level untuk membuka hadiah dan fasilitas khusus.",
+      description: isAuthenticated
+        ? "Naik level untuk membuka hadiah dan fasilitas khusus."
+        : "Masuk untuk naik level dan dapatkan keuntungan!",
       icon: "/assets/fitur-3.png",
     },
   ];
+
   return (
     <section className="py-12 md:py-16 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -213,17 +327,31 @@ function WhyMakanGoSection() {
   );
 }
 
-export default function HomePage() {
+export default function Dashboard() {
+  const { user, loading } = useAuth();
+  // const router = useRouter();
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex justify-center items-center h-screen">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const isAuthenticated = !!user;
+
   return (
     <MainLayout
       title="MakanGo - Review Makanan & Restoran"
       description="Cari review makanan, restoran, kuliner populer dan menarik di MakanGo."
     >
-      <HeroSection />
-      <KulinerCategoriesSection />
-      <PopularPlacesSection />
-      <WhyMakanGoSection />
-      {/* Add more sections here as needed */}
+      <HeroSection isAuthenticated={isAuthenticated} />
+      <KulinerCategoriesSection isAuthenticated={isAuthenticated} />
+      <PopularRestaurantSection isAuthenticated={isAuthenticated} />
+      <WhyMakanGoSection isAuthenticated={isAuthenticated} />
     </MainLayout>
   );
 }
