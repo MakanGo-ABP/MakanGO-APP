@@ -112,7 +112,7 @@ flutter:
     - assets/ex_profile.png
     - assets/ex_profile2.png
     - assets/logo_bronze.png
-    # - assets/logo_silver.png
+    - assets/seisapi.png
     # - assets/logo_gold.png
     - assets/logo_empty.png
     - assets/sample_food.png
