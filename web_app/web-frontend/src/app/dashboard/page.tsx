@@ -149,8 +149,7 @@ function PopularRestaurantSection({
   isAuthenticated: boolean;
 }) {
   const router = useRouter();
-
-  const [restaurants, setRestaurant] = useState<Restaurant[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -163,9 +162,9 @@ function PopularRestaurantSection({
           id: doc.id,
           ...doc.data(),
         })) as Restaurant[];
-        setRestaurant(fetchedRestaurants);
+        setRestaurants(fetchedRestaurants);
       } catch (err) {
-        console.error("Error fetching places:", err);
+        console.error("Error fetching restaurants:", err);
         setError("Gagal memuat tempat populer.");
       } finally {
         setLoading(false);
@@ -175,19 +174,41 @@ function PopularRestaurantSection({
     fetchRestaurants();
   }, []);
 
-  const handleAddReview = () => {
+  const handleAddReview = (restaurantId: string) => {
     if (!isAuthenticated) {
       router.push("/auth/login");
     } else {
-      router.push("/reviews/add");
+      router.push(`/reviews/addRestaurant/${restaurantId}`);
     }
+  };
+
+  const handleDetailRestaurant = (
+    e: React.MouseEvent | React.KeyboardEvent,
+    restaurantId: string
+  ) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      router.push("/auth/login");
+    } else {
+      router.push(`/restaurants/${restaurantId}`);
+    }
+  };
+
+  const normalizeImagePath = (path: string | undefined): string => {
+    if (!path || !path.startsWith("https://")) {
+      return "/assets/placeholder.png";
+    }
+    return path;
   };
 
   if (loading) {
     return (
       <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-gray-600">Memuat tempat populer...</p>
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+            <p className="ml-2 text-gray-600">Memuat tempat populer...</p>
+          </div>
         </div>
       </section>
     );
@@ -197,7 +218,7 @@ function PopularRestaurantSection({
     return (
       <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-red-500">{error}</p>
+          <p className="text-center text-red-500 font-medium">{error}</p>
         </div>
       </section>
     );
@@ -216,7 +237,7 @@ function PopularRestaurantSection({
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {restaurants.length === 0 ? (
-            <p className="text-center text-gray-600 col-span-full">
+            <p className="text-center text-gray-600 font-medium col-span-full">
               Tidak ada tempat populer ditemukan.
             </p>
           ) : (
@@ -225,18 +246,36 @@ function PopularRestaurantSection({
                 key={restaurant.id}
                 className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col"
               >
-                <Image
-                  src={restaurant.imagePath || "/assets/placeholder.jpg"}
-                  alt={restaurant.name}
-                  width={400}
-                  height={200}
-                  className="w-full h-40 object-cover"
-                />
+                <div
+                  role="button"
+                  tabIndex={0}
+                  className="cursor-pointer"
+                  onClick={(e) => handleDetailRestaurant(e, restaurant.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleDetailRestaurant(e, restaurant.id);
+                    }
+                  }}
+                >
+                  <Image
+                    role="button"
+                    src={normalizeImagePath(restaurant.imagePath)}
+                    alt={restaurant.name}
+                    width={400}
+                    height={200}
+                    className="w-full h-40 object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "/assets/placeholder.jpg";
+                      e.currentTarget.alt = "Placeholder Image";
+                    }}
+                  />
+                </div>
+
                 <div className="p-4 flex flex-col flex-grow">
                   <div className="flex items-center justify-between mb-1">
                     <span className="inline-flex items-center bg-yellow-400 text-white text-xs font-semibold px-2 py-0.5 rounded">
                       <Star size={12} className="mr-1 fill-current" />{" "}
-                      {restaurant.rating || "N/A"}
+                      {restaurant.rating?.toFixed(1) || "N/A"}
                     </span>
                     <span className="text-xs text-gray-500">
                       {restaurant.reviews || 0} Reviews
@@ -252,7 +291,7 @@ function PopularRestaurantSection({
                     {restaurant.category || "Tidak dikategorikan"}
                   </p>
                   <button
-                    onClick={handleAddReview}
+                    onClick={() => handleAddReview(restaurant.id)}
                     className={`mt-auto w-full px-4 py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center ${
                       isAuthenticated
                         ? "bg-red-100 text-red-700 hover:bg-red-200"

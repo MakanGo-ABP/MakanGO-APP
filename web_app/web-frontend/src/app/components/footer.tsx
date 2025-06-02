@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image"; // For logo and app mockups
 
 export default function Footer() {
