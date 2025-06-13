@@ -1,4 +1,3 @@
-// src/app/components/ReviewList.tsx
 import ReviewCard from "./ReviewCard";
 
 export default function ReviewList() {

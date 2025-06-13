@@ -25,7 +25,7 @@ export async function registerUser(
     createdAt: serverTimestamp(),
     email,
     jumlah_review: 0,
-    level: 0,
+    level: 1,
     name,
     username: "",
     uid: user.uid,
@@ -47,13 +47,13 @@ export async function loginWithGoogle() {
   const userCredential = await signInWithPopup(auth, googleProvider);
   const user = userCredential.user;
 
-  const userDoc = await getDoc(doc(db, "Users", user.uid));
+  const userDoc = await getDoc(doc(db, "User", user.uid));
   if (!userDoc.exists()) {
-    await setDoc(doc(db, "Users", user.uid), {
+    await setDoc(doc(db, "User", user.uid), {
       createdAt: serverTimestamp(),
       email: user.email || "",
       jumlah_review: 0,
-      level: 0,
+      level: 1,
       name: user.displayName || "",
       username: "",
       uid: user.uid,

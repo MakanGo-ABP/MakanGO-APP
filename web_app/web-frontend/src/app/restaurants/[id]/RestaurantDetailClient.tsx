@@ -29,18 +29,20 @@ import {
   getUserPlaceList,
   addRestaurantToPlaceList,
 } from "../../services/placelist";
-import {} from "../../services/placelist";
 import LikeButton from "@/app/components/LikeReview";
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
-}
+};
 
-export default function RestaurantDetailPage({
+export default function RestaurantDetailClient({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -54,6 +56,7 @@ export default function RestaurantDetailPage({
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
 
+  // ... existing code ... (all the useEffect, handlers, and JSX remain the same)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -334,7 +337,7 @@ export default function RestaurantDetailPage({
                   ))} */}
                 </div>
                 <time className="text-[9px] sm:text-xs text-red-600 font-semibold mb-1 block select-text">
-                  {formatDate(review.createdAt)}
+                  {formatDate(review.createdAt.toString())}
                 </time>
                 <div className="flex items-center space-x-1 text-gray-400 text-xs select-none">
                   <LikeButton

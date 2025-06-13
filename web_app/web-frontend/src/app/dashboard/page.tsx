@@ -3,7 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { MapPin, Star, Edit3 } from "lucide-react";
+import { Star, Edit3 } from "lucide-react";
 import { useAuth } from "../utils/AuthContext";
 import MainLayout from "../components/MainLayout";
 import { collection, getDocs } from "firebase/firestore";
@@ -20,6 +20,7 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
     } else {
       // Handle search logic for authenticated users (e.g., redirect to search results)
       console.log("Explore clicked");
+      router.push("/search");
     }
   };
 
@@ -37,9 +38,8 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                 ? "Temukan rasa yang cocok dengan review di MakanGo!"
                 : "Masuk untuk melihat review dan menemukan kuliner terbaik!"}
             </p>
-            <div className="bg-white p-3 sm:p-4 rounded-lg shadow-lg max-w-lg mx-auto md:mx-0">
-              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                <div className="relative w-full sm:flex-grow">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              {/* <div className="relative w-full sm:flex-grow">
                   <MapPin
                     size={20}
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -50,18 +50,17 @@ function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                     className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
                     disabled={!isAuthenticated}
                   />
-                </div>
-                <button
-                  onClick={handleExplore}
-                  className={`w-full sm:w-auto px-6 py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                    isAuthenticated
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-gray-300 text-gray-700 cursor-not-allowed"
-                  }`}
-                >
-                  Jelajahi
-                </button>
-              </div>
+                </div> */}
+              <button
+                onClick={handleExplore}
+                className={`w-full sm:w-auto px-6 py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                  isAuthenticated
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-gray-300 text-gray-700 cursor-not-allowed"
+                }`}
+              >
+                Jelajahi
+              </button>
             </div>
           </div>
           <div className="hidden md:flex justify-center items-center">
@@ -178,7 +177,7 @@ function PopularRestaurantSection({
     if (!isAuthenticated) {
       router.push("/auth/login");
     } else {
-      router.push(`/reviews/addRestaurant/${restaurantId}`);
+      router.push(`/restaurants/${restaurantId}/review`);
     }
   };
 
@@ -194,12 +193,12 @@ function PopularRestaurantSection({
     }
   };
 
-  const normalizeImagePath = (path: string | undefined): string => {
-    if (!path || !path.startsWith("https://")) {
-      return "/assets/placeholder.png";
-    }
-    return path;
-  };
+  // const normalizeImagePath = (path: string | undefined): string => {
+  //   if (!path || !path.startsWith("https://")) {
+  //     return "/assets/placeholder-detail.png";
+  //   }
+  //   return path;
+  // };
 
   if (loading) {
     return (
@@ -259,7 +258,7 @@ function PopularRestaurantSection({
                 >
                   <Image
                     role="button"
-                    src={normalizeImagePath(restaurant.imagePath)}
+                    src={`/${restaurant.imagePath}`}
                     alt={restaurant.name}
                     width={400}
                     height={200}

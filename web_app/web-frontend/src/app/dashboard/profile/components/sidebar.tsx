@@ -2,7 +2,7 @@
 
 import React from "react";
 import SidebarItem from "./sidebarItem";
-import { FaUserCircle, FaStar, FaListAlt, FaCommentDots } from "react-icons/fa";
+import { FaUserCircle, FaStar } from "react-icons/fa";
 
 const Sidebar = ({ active }: { active: string }) => {
   return (
@@ -22,18 +22,6 @@ const Sidebar = ({ active }: { active: string }) => {
           label="Level"
           href="/dashboard/profile/level"
           active={active === "level"}
-        />
-        <SidebarItem
-          icon={<FaCommentDots />}
-          label="Ulasan"
-          href="/dashboard/profile/ulasan"
-          active={active === "ulasan"}
-        />
-        <SidebarItem
-          icon={<FaListAlt />}
-          label="Daftar Tempat"
-          href="/dashboard/profile/placelist"
-          active={active === "placelist"}
         />
       </div>
     </aside>

@@ -1,7 +1,7 @@
-// app/components/MainLayout.tsx
 "use client";
 
 import Head from "next/head";
+import { usePathname } from "next/navigation";
 import { useAuth } from "../utils/AuthContext";
 import HeaderAuth from "./headerAuth";
 import HeaderNonAuth from "./headerNonAuth";
@@ -19,9 +19,13 @@ export default function MainLayout({
   description = "Temukan review makanan terbaik!",
 }: MainLayoutProps) {
   const { user, loading } = useAuth();
+  const pathname = usePathname();
+
+  // Check if current route is dashboard
+  const isDashboard = pathname === "/dashboard";
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-white">
       <Head>
         <title>{title}</title>
         <meta name="description" content={description} />
@@ -29,8 +33,8 @@ export default function MainLayout({
       </Head>
 
       {loading ? (
-        <div className="flex justify-center items-center h-16 bg-white shadow">
-          <p className="text-gray-600">Loading...</p>
+        <div className="h-16 bg-white shadow">
+          <p className="text-gray-600 text-center pt-4">Loading...</p>
         </div>
       ) : user ? (
         <HeaderAuth />
@@ -38,9 +42,10 @@ export default function MainLayout({
         <HeaderNonAuth />
       )}
 
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow bg-white">{children}</main>
 
-      <Footer />
+      {/* Only show footer on dashboard route */}
+      {isDashboard && <Footer />}
     </div>
   );
 }

@@ -40,4 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-web-frontend/firebase_credentials.json
+firebase_credentials.json
